@@ -28,3 +28,6 @@ jobs:
     - name: Build and test sporesJS
       shell: bash
       run: sbt "project sporesJS ; clean ; test"
+    - name: Build and test sporesNative
+      shell: bash
+      run: sbt "project sporesNative ; clean ; test"
