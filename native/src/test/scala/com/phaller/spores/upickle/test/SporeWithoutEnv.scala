@@ -7,5 +7,5 @@ import com.phaller.spores.Builder
 
 @EnableReflectiveInstantiation
 object SporeWithoutEnv extends Builder[Int, Int](
-  (x: Int) => x + 1
+  x => x + 1
 )
