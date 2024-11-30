@@ -8,6 +8,7 @@ import org.junit.Assert.*
 import sporks.given
 import sporks.*
 import sporks.jvm.*
+import sporks.TestUtils.*
 
 val lambda = Spork.apply[Int => Boolean] { x => x > 10 }
 
@@ -71,7 +72,7 @@ class SporkLambdaTests:
   def testPackedLambdaWithEnvReadWriter(): Unit =
     val json9 = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$package$Lambda$9"},"env":"9","envRW":{"$type":"sporks.PackedObject","fun":"sporks.package$INT_RW$"}}"""
     val json11 = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$package$Lambda$9"},"env":"11","envRW":{"$type":"sporks.PackedObject","fun":"sporks.package$INT_RW$"}}"""
-    
+
     val packed9 = upickle.default.write(lambda.packWithEnv(9))
     val packed11 = upickle.default.write(lambda.packWithEnv(11))
     assertEquals(json9, packed9)
@@ -105,28 +106,64 @@ class SporkLambdaTests:
     assertEquals(6, fun)
 
   @Test
-  def testCompileTimeError(): Unit =
-    // Invalid capture of variable `y`. Use the first parameter of a spork's body to refer to the spork's environment.
+  def testInvalidCaptureIdent(): Unit =
     assertTrue:
-      val y = 12
-      TestUtils.typeCheckFail:
+      typeCheckErrors:
         """
-        Spork[Int => Int].apply { x => x + y }
+        val y = 12
+        Spork.apply[Int => Int] { x => x + y }
         """
+      .contains:
+        """
+        Invalid capture of variable `y`. Use the first parameter of a spork's body to refer to the spork's environment.
+        """.strip()
 
     assertTrue:
-      // Invalid capture of variable `x`. Use first parameter of spore's body to refer to the spore's environment.
-      TestUtils.typeCheckFail:
+      typeCheckErrors:
         """
-        Spork[Int => Int].apply { x => Spork[Int => Int] { y => x + y }.build().apply(x) }
+        Spork.apply[Int => Int] { x => Spork[Int => Int] { y => x + y }.build().apply(x) }
         """
+      .contains:
+        """
+        Invalid capture of variable `x`. Use the first parameter of a spork's body to refer to the spork's environment.
+        """.strip()
 
-    // // FIXME: This should not compile
-    // assertTrue:
-    //   TestUtils.typeCheckFail:
-    //     """
-    //     class TestClass {
-    //       val packed = Spork.apply { () => this.toString }
-    //     }
-    //     new TestClass().packed.build()
-    //     """
+  val captureMeIfYouCan = 12
+
+  @Test
+  def testInvalidCaptureThis(): Unit =
+    assertTrue:
+      typeCheckErrors:
+        """
+        class TestClass {
+          Spork.apply { () => this.toString() }.build()
+        }
+        (new TestClass())
+        """
+      .contains:
+        """
+        Invalid capture of variable `TestClass`. Use the first parameter of a spork's body to refer to the spork's environment.
+        """.strip()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+        class Outer:
+          val x = 12
+          Spork.apply { () => 42 * x }.build()
+        (new Outer())
+        """
+      .contains:
+        """
+        Invalid capture of `this` from class Some(Outer).
+        """.strip()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+        Spork.apply { () => 42 * captureMeIfYouCan }.build()
+        """
+      .contains:
+        """
+        Invalid capture of `this` from class Some(SporkLambdaTests).
+        """.strip()

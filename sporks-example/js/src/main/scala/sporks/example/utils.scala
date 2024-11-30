@@ -5,11 +5,11 @@ package utils
 import upickle.default.*
 import scalajs.js.Dynamic.global
 
-private def readFileSync(path: String, encoding: String): String = 
+private def readFileSync(path: String, encoding: String): String =
   val fs = global.require("fs")
   fs.readFileSync(path, encoding).asInstanceOf[String]
 
-private def writeFileSync[T: ReadWriter](file: String, data: String, encoding: String): Unit = 
+private def writeFileSync[T: ReadWriter](file: String, data: String, encoding: String): Unit =
   val fs = global.require("fs")
   fs.writeFileSync(file, data, encoding)
 

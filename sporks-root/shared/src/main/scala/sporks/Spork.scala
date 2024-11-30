@@ -12,7 +12,7 @@ import scala.quoted.*
 trait SporkObject[+T](val fun: T)
 
 @Reflect.EnableReflectiveInstantiation
-trait SporkClass[+T] (val fun: T)
+trait SporkClass[+T](val fun: T)
 
 @Reflect.EnableReflectiveInstantiation
 private[sporks] trait SporkLambda[+T](val fun: T)
@@ -37,23 +37,25 @@ extension [T](inline builder: SporkClass[T]) { inline def pack(): PackedClass[T]
 extension [T](inline builder: SporkLambda[T]){ inline def pack(): PackedLambda[T] = ${ packMacroLambda('builder) } }
 
 
-private def packMacroObject[T](builderExpr: Expr[SporkObject[T]])(using Type[T], Quotes): Expr[PackedObject[T]] =
-  '{ PackedObject($builderExpr.getClass().getName()) }
-
-private def packMacroLambda[T](lambdaExpr: Expr[SporkLambda[T]])(using Type[T], Quotes): Expr[PackedLambda[T]] =
-  '{ PackedLambda($lambdaExpr.getClass().getName()) }
+private def packMacroObject[T](objectExpr: Expr[SporkObject[T]])(using Type[T], Quotes): Expr[PackedObject[T]] =
+  Macros.isTopLevelObject(objectExpr)
+  '{ PackedObject($objectExpr.getClass().getName()) }
 
 private def packMacroClass[T](classExpr: Expr[SporkClass[T]])(using Type[T], Quotes): Expr[PackedClass[T]] =
+  Macros.isTopLevelClass(classExpr)
   '{ PackedClass($classExpr.getClass().getName()) }
 
+private def packMacroLambda[T](lambdaExpr: Expr[SporkLambda[T]])(using Type[T], Quotes): Expr[PackedLambda[T]] =
+  // No checks needed, all relevant checks are done in the lambda factory `Spork.apply`.
+  '{ PackedLambda($lambdaExpr.getClass().getName()) }
 
 extension [T, R](inline packed: PackedSpork[T => R]) {
-  inline def packWithEnv(inline env: T)(using prw: PackedSpork[ReadWriter[T]]): PackedWithEnv[T, R] = 
+  inline def packWithEnv(inline env: T)(using prw: PackedSpork[ReadWriter[T]]): PackedWithEnv[T, R] =
     PackedWithEnv(packed, write(env)(using prw.build()), prw)
 }
 
 extension [T, R](inline packed: PackedSpork[T ?=> R]) {
-  inline def packWithCtx(inline env: T)(using prw: PackedSpork[ReadWriter[T]]): PackedWithCtx[T, R] = 
+  inline def packWithCtx(inline env: T)(using prw: PackedSpork[ReadWriter[T]]): PackedWithCtx[T, R] =
     PackedWithCtx(packed, write(env)(using prw.build()), prw)
 }
 
@@ -61,15 +63,15 @@ extension [T, R](inline packed: PackedSpork[T ?=> R]) {
 // build()
 ////////////////////////////////////////////////////////////////////////////////
 
-extension [T](packed: PackedSpork[T]){ 
-  def build(): T = 
+extension [T](packed: PackedSpork[T]) {
+  def build(): T =
     def unpackEnv[E](env: String, rw: PackedSpork[ReadWriter[E]]): E = read[E](env)(using rw.build())
     packed match
-      case PackedObject(fun) => 
+      case PackedObject(fun) =>
         Reflect.getModuleFieldValue[SporkObject[T]](fun).fun
       case PackedClass(fun) =>
         Reflect.getClassInstance[SporkClass[T]](fun).fun
-      case PackedLambda(fun) => 
+      case PackedLambda(fun) =>
         Reflect.getClassInstance[SporkLambda[T]](fun).fun
       case PackedWithEnv(packed, env, envRW) =>
         packed.build()(unpackEnv(env, envRW))

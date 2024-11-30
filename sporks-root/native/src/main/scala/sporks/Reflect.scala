@@ -1,8 +1,8 @@
 package sporks
 
-object Reflect { 
+object Reflect {
   import scala.scalanative.reflect.{Reflect => NativeReflect}
-  
+
   export scala.scalanative.reflect.annotation.EnableReflectiveInstantiation
 
   def getModuleFieldValue[T](name: String): T =

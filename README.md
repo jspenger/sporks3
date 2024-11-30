@@ -113,25 +113,33 @@ You can find more examples in the [sporks-example](sporks-example) directory.
 Packing an environment variable of type `T` requires that a `PackedSpork[ReadWriter[T]]` is available in the contextual scope.
 This way, the environment variable is packed together with a serialized/pickled serializer/pickler for its type.
 The most common packed picklers are already available and can be imported by `import sporks.given`.
+You can also create your own packed picklers, examples of this are in [sporks-root/shared/src/main/scala/sporks/package.scala](sporks-root/shared/src/main/scala/sporks/package.scala).
 
-You can create your own packed picklers. You can find examples of this in [sporks-root/shared/src/main/scala/sporks/package.scala](sporks-root/shared/src/main/scala/sporks/package.scala)
+## Compile Time Checks
 
-## Common Errors
+Sporks3 leverages the Scala 3 macro system to make the serialization/pickling process as safe as possible.
+It does so by the following principles (c.f. [[Miller, Haller, and Odersky 2014]](https://link.springer.com/chapter/10.1007/978-3-662-44202-9_13), [[Haller 2022]](https://dl.acm.org/doi/10.1145/3550198.3550428)).
 
-- `ClassNotFoundException`, `java.lang.NoSuchMethodException: [...].<init>()`, `java.lang.NoSuchFieldException: MODULE$`
-  - Case 1. 
-    You will encounter this error when trying to `build` your closure.
-    You have likely nested a SporkObject or a SporkClass definition inside a method call or similar.
-    A SporkObject must either be top-level objects or nested within objects.
-    A SporkClass must be not be a local class, i.e. not inside a method.
-    You can find more info at: [https://github.com/portable-scala/portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect)
-  - Case 2.
-    You have extended a SporkObject from a class, or you have extended a SporkClass from an object.
-    Make sure that for your object you extend the SporkObject trait and vice versa.
+> [!NOTE]
+> Disclaimer: Although the compile-time checks work well for many cases, there may still be uncaught cases.
+
+**SporkObject.**
+Compile time checks ensure that any `SporkObject` is a top-level object, therefore satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements.
+Thus, invoking the `pack` and `build` methods are guaranteed to not cause a runtime error.
+Further, as a `SporkObject` is a top-level object, it can only access other top-level singleton objects.
+
+**SporkClass.**
+Compile time checks ensure that any `SporkClass` is concrete; has a public constructor; and is a not a local class, e.g. nested inside a method, thus satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements
+Furthermore, checks ensure that a `SporkClass` cannot be nested inside another class, i.e., it must be a top-level class.
+Last, a final check ensures that a `SporkClass`'s constructor has an empty parameter list, this is an internal requirement of the implementation.
+This way, invoking the `pack` and `build` methods are guaranteed to not cause a runtime error.
+
+**Spork Lambda.**
+A compile time check ensures that the body of the lambda only accesses its own parameters and other top-level object singletons.
+By this mechanism, it is guaranteed to not cause a runtime error to invoke `pack` and `build` methods on it.
 
 ## Roadmap
 
 - Add the `Duplicable` trait from Spores3, together with weaker and stronger sporks.
 - Remove the type parameters on PackedSpork[T], PackedObject[T], etc., and replace with type members instead. This will enable the use of `SporkObject`s instead of `SporkClass`es for the packed serializers/picklers of `PackedSpork`s.
 - Remove the direct dependency on upickle, make it work with any type-class-based serialization library.
-- Increase the robustness of compile-time checks. There are some errors which are currently not caught.

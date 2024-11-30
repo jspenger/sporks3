@@ -52,7 +52,7 @@ package object sporks {
   // PackedSpork[ReadWriter[F[T]]] for Option[T], List[T], etc.
   //////////////////////////////////////////////////////////////////////////////
 
-  // FIXME: if PackedSpork did not have a type parameter (e.g., by having it as 
+  // FIXME: if PackedSpork did not have a type parameter (e.g., by having it as
   // a type member), then we could define these by means of objects instead.
 
   // object PACKED_RW extends SporkObject[ReadWriter[PackedSpork[_]]](macroRW)
@@ -81,7 +81,7 @@ package object sporks {
 
   class PACKED_CLASS_RW[T] extends SporkClass[ReadWriter[PackedClass[T]]](summon)
   given packed_class_rw[T]: PackedSpork[ReadWriter[PackedClass[T]]] = (new PACKED_CLASS_RW()).pack()
-  
+
   class PACKED_LAMBDA_RW[T] extends SporkClass[ReadWriter[PackedLambda[T]]](summon)
   given packed_lambda_rw[T]: PackedSpork[ReadWriter[PackedLambda[T]]] = (new PACKED_LAMBDA_RW()).pack()
 
@@ -105,7 +105,7 @@ package object sporks {
   class LIST_RW[T] extends UnpackingCombinator[ReadWriter[T], ReadWriter[List[T]]]({ summon[ReadWriter[List[T]]] })
   given list_rw[T](using t_rw: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[List[T]]] = new LIST_RW[T].pack().packWithCtx(t_rw)
 
-  // FIXME: We should let the user defined their own ReadWriter for Try, as it 
+  // FIXME: We should let the user defined their own ReadWriter for Try, as it
   // requires a custom ReadWriter for Throwable. This is a temporary solution.
   given [T: ReadWriter]: ReadWriter[Try[T]]     = macroRW
   given [T: ReadWriter]: ReadWriter[Failure[T]] = macroRW

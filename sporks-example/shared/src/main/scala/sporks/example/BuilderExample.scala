@@ -28,9 +28,6 @@ object SporkOption2
       x => env.map(_ + x).map(_.toString.reverse).getOrElse("")
     )
 
-// Should cause compile error (but currently doesn't), will instead cause runtime error
-def SporkPackFail = new SporkObject[Int => String](x => x.toString.reverse) {}
-
 object BuilderExample:
   def main(args: Array[String]): Unit =
     println:
@@ -57,12 +54,6 @@ object BuilderExample:
       HigherLevelFilter.pack().packWithEnv(Predicate.pack()).build()(9)
     println:
       HigherLevelFilter.pack().packWithEnv(Predicate.pack()).build()(11)
-
-    println:
-      "SporkPackFail"
-    println:
-      try SporkPackFail.pack().build()(10)
-      catch case e: Throwable => e
 
     println:
       writeToFile(Spork1.pack(), "Spork1.json")

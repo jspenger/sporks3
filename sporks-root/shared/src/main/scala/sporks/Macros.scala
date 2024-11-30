@@ -23,9 +23,12 @@ object Macros {
         uses of top-level objects are OK.
       */
 
-      val acc = new TreeAccumulator[List[Ident]] {
-        def foldTree(ids: List[Ident], tree: Tree)(owner: Symbol): List[Ident] = tree match {
+      // JS: changed Ident -> Tree
+      val acc = new TreeAccumulator[List[Tree]] {
+        def foldTree(ids: List[Tree], tree: Tree)(owner: Symbol): List[Tree] = tree match {
           case id @ Ident(_) => id :: ids
+          // JS: added special case for `this`
+          case thiz @ This(_) => thiz :: ids
           case _ =>
             try {
               foldOverTree(ids, tree)(owner)
@@ -40,6 +43,13 @@ object Macros {
       val foundSyms = foundIds.map(id => id.symbol)
       val names = foundSyms.map(sym => sym.name)
       val ownerNames = foundSyms.map(sym => sym.owner.name)
+
+      // JS: add check and report error if captured `this`
+      foundIds.foreach(id => id match
+        case This(opt) =>
+          report.error(s"Invalid capture of `this` from class ${opt}.", id.pos)
+        case _ => ()
+      )
 
       val allOwnersOK = foundSyms.forall(sym =>
         ownerChainContains(sym, defdefSym) ||
@@ -61,7 +71,8 @@ object Macros {
           if (!isOwnedByToplevelObject) {
             // might find illegal capturing
             if (!isOwnedBySpore)
-              report.error(s"Invalid capture of variable `${id.name}`. Use the first parameter of a spork's body to refer to the spork's environment.", id.pos)
+              // JS: id -> id.symbol
+              report.error(s"Invalid capture of variable `${id.symbol.name}`. Use the first parameter of a spork's body to refer to the spork's environment.", id.pos)
           }
         }
       }
@@ -120,8 +131,15 @@ object Macros {
   }
   // End of copied code
 
-  private[sporks] def checkOwners[T](builderExpr: Expr[T])(using Type[T], Quotes): Expr[Unit] = {
+  private[sporks] def isTopLevelObject[T](builderExpr: Expr[T])(using Type[T], Quotes): Expr[Unit] = {
     import quotes.reflect.*
+
+    // Here we check the following to ensure that it works on Scala.js and Scala Native:
+    // See: https://github.com/portable-scala/portable-scala-reflect
+    // > It must be "static", i.e., top-level or defined inside a static object
+
+    def isObject(sym: Symbol): Boolean =
+      sym.flags.is(Flags.Module)
 
     // Copied from Spores3
     // See: https://github.com/phaller/spores3/blob/main/shared/src/main/scala/com/phaller/spores/SporeData.scala
@@ -130,13 +148,85 @@ object Macros {
 
     val tree = builderExpr.asTerm
     val builderTpe = tree.tpe
+    // JS: add check for object
+    if (!isObject(builderTpe.typeSymbol)) {
+      report.error(s"The provided SporkObject `${builderExpr.show}` is not an object.")
+    }
+    // End JS
     val owner = builderTpe.typeSymbol.maybeOwner
     if (!allOwnersOK(owner)) {
-      report.error("An owner of the provided builder is neither an object nor a package.")
+      // JS: commented out
+      // report.error("An owner of the provided builder is neither an object nor a package.")
+      // JS: instead we also report the builderExpr and the name of the owner
+      report.error(s"The provided SporkObject `${builderExpr.show}` is not a top-level object; its owner `${owner.name}` is not a top-level object nor a package.")
     }
     // End of copied code
 
     '{ () }
   }
 
+  private[sporks] def isTopLevelClass[T](builderExpr: Expr[T])(using Type[T], Quotes): Expr[Unit] = {
+    import quotes.reflect.*
+
+    // Here we check the following to ensure that it works on Scala.js and Scala Native:
+    // See: https://github.com/portable-scala/portable-scala-reflect
+    // > It must be concrete
+    // > It must have at least one public constructor
+    // > It must not be a local class, i.e., defined inside a method
+    //
+    // In addition, we do the following checks.
+    // > It is not nested in another class.
+    // > It has a constructor with an empty parameter list.
+
+    def isClass(sym: Symbol): Boolean =
+      sym.isClassDef && !sym.flags.is(Flags.Module)
+
+    def isConcrete(sym: Symbol): Boolean = {
+      !sym.flags.is(Flags.Abstract)
+      && !sym.flags.is(Flags.Trait)
+      && !sym.flags.is(Flags.Sealed)
+    }
+
+    def isPublic(sym: Symbol): Boolean = {
+      !sym.flags.is(Flags.Private)
+      && !sym.flags.is(Flags.Protected)
+    }
+
+    def isNotLocal(owner: Symbol): Boolean =
+      owner.isNoSymbol || (!owner.flags.is(Flags.Method) && isNotLocal(owner.owner))
+
+    def isNotNestedInClass(owner: Symbol): Boolean =
+      owner.isNoSymbol || (!(owner.isClassDef && !owner.flags.is(Flags.Module)) && isNotNestedInClass(owner.owner))
+
+    def containsEmptyParamList(sym: Symbol): Boolean = {
+      sym.paramSymss.isEmpty
+      || sym.paramSymss.exists(_.isEmpty)
+    }
+
+    val tree = builderExpr.asTerm
+    val builderTpe = tree.tpe
+    val owner = builderTpe.typeSymbol.maybeOwner
+
+    if (!isClass(builderTpe.typeSymbol)) {
+      report.error(s"The provided SporkClass `${builderExpr.show}` is not a class.")
+    }
+    if (!isConcrete(builderTpe.typeSymbol)) {
+      report.error(s"The provided SporkClass `${builderTpe.typeSymbol.name}` is not a concrete class.")
+    }
+    val constructor = builderTpe.typeSymbol.primaryConstructor
+    if (!isPublic(constructor)) {
+      report.error(s"The provided SporkClass `${constructor.name}` does not have a public constructor.")
+    }
+    if (!isNotLocal(builderTpe.typeSymbol)) {
+      report.error(s"The provided SporkClass `${builderTpe.typeSymbol.name}` is not a local class.")
+    }
+    if (!isNotNestedInClass(builderTpe.typeSymbol.owner)) {
+      report.error(s"The provided SporkClass `${builderTpe.typeSymbol.name}` is nested in a class.")
+    }
+    if (!containsEmptyParamList(constructor)) {
+      report.error(s"The constructor of the provided SporkClass `${constructor.name}` does not have an empty parameter list.")
+    }
+
+    '{ () }
+  }
 }

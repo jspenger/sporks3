@@ -9,7 +9,7 @@ val Lambda1 = Spork[Int => String] { x => x.toString.reverse }
 
 val Lambda2 = Spork.applyWithEnv[Int, Int => String](12) { env => x => (env + x).toString.reverse }
 
-val Lambda3 = Spork[Option[Int] => Int] { x => x.map{ _ + 1 }.getOrElse(0) }
+val Lambda3 = Spork[Option[Int] => Int] { x => x.map { _ + 1 }.getOrElse(0) }
 
 // // Should cause compile error
 // object ShouldFail:
