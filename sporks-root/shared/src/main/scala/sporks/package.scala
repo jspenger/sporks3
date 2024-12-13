@@ -52,44 +52,35 @@ package object sporks {
   // PackedSpork[ReadWriter[F[T]]] for Option[T], List[T], etc.
   //////////////////////////////////////////////////////////////////////////////
 
-  // FIXME: if PackedSpork did not have a type parameter (e.g., by having it as
-  // a type member), then we could define these by means of objects instead.
+  // Note:
+  // `PackedSpork[ReadWriter[PackedSpork[T]]]`s are implemented as 
+  // `SporkObject`s instead of `SporkClass`es. This is for optimization reasons,
+  // a packed spork can use the same `ReadWriter` for all type parameters T. To 
+  // make it work, the object is cast to `PackedSpork[T]` using `asInstanceOf`.
+  // This should have no effect on the runtime behavior, as the type parameter 
+  // T is erased.
+  // 
+  // An implementation with `SporkClass` would look like this:
+  // class PACKED_RW_T[T] extends SporkClass[ReadWriter[PackedSpork[T]]](macroRW)
+  // given packed_rw_t[T]: PackedSpork[ReadWriter[PackedSpork[T]]] = (new PACKED_RW_T()).pack()
+    
+  object PACKED_RW extends SporkObject[ReadWriter[PackedSpork[_]]](macroRW)
+  given packed_rw[T]: PackedSpork[ReadWriter[PackedSpork[T]]] = PACKED_RW.pack().asInstanceOf
 
-  // object PACKED_RW extends SporkObject[ReadWriter[PackedSpork[_]]](macroRW)
-  // given packed_rw: PackedSpork[ReadWriter[PackedSpork[_]]] = PACKED_RW.pack()
+  object PACKED_OBJECT_RW extends SporkObject[ReadWriter[PackedObject[_]]](macroRW)
+  given packed_object_rw[T]: PackedSpork[ReadWriter[PackedObject[T]]] = PACKED_OBJECT_RW.pack().asInstanceOf
 
-  // object PACKED_OBJECT_RW extends SporkObject[ReadWriter[PackedObject[_]]](macroRW)
-  // given packed_object_rw: PackedSpork[ReadWriter[PackedObject[_]]] = PACKED_OBJECT_RW.pack()
+  object PACKED_CLASS_RW extends SporkObject[ReadWriter[PackedClass[_]]](macroRW)
+  given packed_class_rw[T]: PackedSpork[ReadWriter[PackedClass[T]]] = PACKED_CLASS_RW.pack().asInstanceOf
 
-  // object PACKED_CLASS_RW extends SporkObject[ReadWriter[PackedClass[_]]](macroRW)
-  // given packed_class_rw: PackedSpork[ReadWriter[PackedClass[_]]] = PACKED_CLASS_RW.pack()
+  object PACKED_LAMBDA_RW extends SporkObject[ReadWriter[PackedLambda[_]]](macroRW)
+  given packed_lambda_rw[T]: PackedSpork[ReadWriter[PackedLambda[T]]] = PACKED_LAMBDA_RW.pack().asInstanceOf
 
-  // object PACKED_LAMBDA_RW extends SporkObject[ReadWriter[PackedLambda[_]]](macroRW)
-  // given packed_lambda_rw: PackedSpork[ReadWriter[PackedLambda[_]]] = PACKED_LAMBDA_RW.pack()
+  object PACKED_WITH_ENV_RW extends SporkObject[ReadWriter[PackedWithEnv[_, _]]](macroRW)
+  given packed_with_env_rw[E, T]: PackedSpork[ReadWriter[PackedWithEnv[E, T]]] = PACKED_WITH_ENV_RW.pack().asInstanceOf
 
-  // object PACKED_WITH_ENV_RW extends SporkObject[ReadWriter[PackedWithEnv[_, _]]](macroRW)
-  // given packed_with_env_rw: PackedSpork[ReadWriter[PackedWithEnv[_, _]]] = PACKED_WITH_ENV_RW.pack()
-
-  // object PACKED_WITH_CTX_RW extends SporkObject[ReadWriter[PackedWithCtx[_, _]]](macroRW)
-  // given packed_with_ctx_rw: PackedSpork[ReadWriter[PackedWithCtx[_, _]]] = PACKED_WITH_CTX_RW.pack()
-
-  class PACKED_RW_T[T] extends SporkClass[ReadWriter[PackedSpork[T]]](summon)
-  given packed_rw_t[T]: PackedSpork[ReadWriter[PackedSpork[T]]] = (new PACKED_RW_T()).pack()
-
-  class PACKED_OBJECT_RW_T[T] extends SporkClass[ReadWriter[PackedObject[T]]](summon)
-  given packed_object_rw_t[T]: PackedSpork[ReadWriter[PackedObject[T]]] = (new PACKED_OBJECT_RW_T()).pack()
-
-  class PACKED_CLASS_RW[T] extends SporkClass[ReadWriter[PackedClass[T]]](summon)
-  given packed_class_rw[T]: PackedSpork[ReadWriter[PackedClass[T]]] = (new PACKED_CLASS_RW()).pack()
-
-  class PACKED_LAMBDA_RW[T] extends SporkClass[ReadWriter[PackedLambda[T]]](summon)
-  given packed_lambda_rw[T]: PackedSpork[ReadWriter[PackedLambda[T]]] = (new PACKED_LAMBDA_RW()).pack()
-
-  class PACKED_WITH_ENV_RW[E, T] extends SporkClass[ReadWriter[PackedWithEnv[E, T]]](summon)
-  given packed_with_env_rw[E, T]: PackedSpork[ReadWriter[PackedWithEnv[E, T]]] = (new PACKED_WITH_ENV_RW()).pack()
-
-  class PACKED_WITH_CTX_RW[E, T] extends SporkClass[ReadWriter[PackedWithCtx[E, T]]](summon)
-  given packed_with_ctx_rw[E, T]: PackedSpork[ReadWriter[PackedWithCtx[E, T]]] = (new PACKED_WITH_CTX_RW()).pack()
+  object PACKED_WITH_CTX_RW extends SporkObject[ReadWriter[PackedWithCtx[_, _]]](macroRW)
+  given packed_with_ctx_rw[E, T]: PackedSpork[ReadWriter[PackedWithCtx[E, T]]] = PACKED_WITH_CTX_RW.pack().asInstanceOf
 
   private abstract class UnpackingCombinator[T, U](fun: T ?=> U) extends SporkClass[PackedSpork[T] ?=> U]({ packed ?=> fun.apply(using packed.build()) })
 
@@ -104,18 +95,5 @@ package object sporks {
 
   class LIST_RW[T] extends UnpackingCombinator[ReadWriter[T], ReadWriter[List[T]]]({ summon[ReadWriter[List[T]]] })
   given list_rw[T](using t_rw: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[List[T]]] = new LIST_RW[T].pack().packWithCtx(t_rw)
-
-  // FIXME: We should let the user defined their own ReadWriter for Try, as it
-  // requires a custom ReadWriter for Throwable. This is a temporary solution.
-  given [T: ReadWriter]: ReadWriter[Try[T]]     = macroRW
-  given [T: ReadWriter]: ReadWriter[Failure[T]] = macroRW
-  given [T: ReadWriter]: ReadWriter[Success[T]] = macroRW
-  given [T: ReadWriter]: ReadWriter[Throwable]  = readwriter[String].bimap[Throwable](
-    t => s"Throwable(${t.getClass.getName}: ${t.getMessage})",
-    str => new Exception(str)
-  )
-
-  class TRY_RW[T] extends UnpackingCombinator[ReadWriter[T], ReadWriter[Try[T]]]({ summon[ReadWriter[Try[T]]] })
-  given try_rw[T](using t_rw: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[Try[T]]] = new TRY_RW[T].pack().packWithCtx(t_rw)
 
 }
