@@ -22,9 +22,5 @@ jobs:
       uses: sbt/setup-sbt@v1
     - name: Examples build and test JVM
       run: |
-        sbt "exampleJVM/runMain sporks.example.BuilderExample"
-        sbt "exampleJVM/runMain sporks.example.LambdaExample"
-    - name: Example build and test JS
-      run: sbt "exampleJS/run"
-    - name: Example build and test Native
-      run: sbt "exampleNative/run"
+        make build
+        make test-example

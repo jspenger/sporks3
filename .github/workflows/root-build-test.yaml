@@ -21,4 +21,6 @@ jobs:
     - name: Setup sbt
       uses: sbt/setup-sbt@v1
     - name: Root build and test
-      run: sbt -v test
+      run: |
+        make build
+        make test

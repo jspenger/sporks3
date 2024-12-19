@@ -10,15 +10,34 @@ import sporks.*
 import sporks.jvm.*
 import sporks.TestUtils.*
 
-val lambda = Spork.apply[Int => Boolean] { x => x > 10 }
-
-val lambdaWithEnv = Spork.applyWithEnv(11) { x => x > 10 }
-
-object NestedLambda:
+object SporkLambdaTests:
   val lambda = Spork.apply[Int => Boolean] { x => x > 10 }
+
+  val lambdaWithEnv = Spork.applyWithEnv(11) { x => x > 10 }
+
+  object NestedLambda:
+    val lambda = Spork.apply[Int => Boolean] { x => x > 10 }
+
+  def methodLambda(): PackedSpork[Int => Boolean] =
+    Spork.apply[Int => Boolean] { x => x > 10 }
+
+  def methodLambdaWithUnnusedArg(x: Int): PackedSpork[Int => Boolean] =
+    Spork.apply[Int => Boolean] { y => y > 10 }
+
+  inline def inlinedMethodLambda(): PackedSpork[Int => Boolean] =
+    Spork.apply[Int => Boolean] { x => x > 10 }
+
+  inline def inlinedMethodLambdaWithArg(x: Int): PackedSpork[Int => Boolean] =
+    Spork.apply[Int => Boolean] { y => y > x }
+
+  class ClassWithLambda():
+    val lambda = Spork.apply[Int => Boolean] { x => x > 10 }
+    def methodLambda() = Spork.apply[Int => Boolean] { x => x > 10 }
 
 @RunWith(classOf[JUnit4])
 class SporkLambdaTests:
+  import SporkLambdaTests.*
+
   @Test
   def testLambda(): Unit =
     val predicate = lambda.build()
@@ -48,7 +67,7 @@ class SporkLambdaTests:
 
   @Test
   def testPackedLambdaReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$package$Lambda$9"}"""
+    val json = """{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$10"}"""
 
     val packed = upickle.default.write(lambda)
     assertEquals(json, packed)
@@ -59,7 +78,7 @@ class SporkLambdaTests:
 
   @Test
   def testNestedLambdaReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedLambda","fun":"sporks.jvm.NestedLambda$Lambda$1"}"""
+    val json = """{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$NestedLambda$Lambda$12"}"""
 
     val packed = upickle.default.write(NestedLambda.lambda)
     assertEquals(json, packed)
@@ -70,8 +89,8 @@ class SporkLambdaTests:
 
   @Test
   def testPackedLambdaWithEnvReadWriter(): Unit =
-    val json9 = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$package$Lambda$9"},"env":"9","envRW":{"$type":"sporks.PackedObject","fun":"sporks.package$INT_RW$"}}"""
-    val json11 = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$package$Lambda$9"},"env":"11","envRW":{"$type":"sporks.PackedObject","fun":"sporks.package$INT_RW$"}}"""
+    val json9 = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$10"},"env":"9","envRW":{"$type":"sporks.PackedObject","fun":"sporks.package$INT_RW$"}}"""
+    val json11 = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$10"},"env":"11","envRW":{"$type":"sporks.PackedObject","fun":"sporks.package$INT_RW$"}}"""
 
     val packed9 = upickle.default.write(lambda.packWithEnv(9))
     val packed11 = upickle.default.write(lambda.packWithEnv(11))
@@ -85,7 +104,7 @@ class SporkLambdaTests:
 
   @Test
   def testLambdaWithEnvConstructorReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$package$Lambda$10"},"env":"11","envRW":{"$type":"sporks.PackedObject","fun":"sporks.package$INT_RW$"}}"""
+    val json = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"},"env":"11","envRW":{"$type":"sporks.PackedObject","fun":"sporks.package$INT_RW$"}}"""
 
     val packed = upickle.default.write(lambdaWithEnv)
     assertEquals(json, packed)
@@ -106,6 +125,48 @@ class SporkLambdaTests:
     assertEquals(6, fun)
 
   @Test
+  def testLambdaFromMethodCreator(): Unit =
+    val packed = methodLambda()
+    val fun = packed.build()
+    assertTrue(fun(11))
+    assertFalse(fun(9))
+
+  @Test
+  def testLambdaFromMethodCreatorWithUnnusedArg(): Unit =
+    val packed = methodLambdaWithUnnusedArg(11)
+    val fun = packed.build()
+    assertTrue(fun(11))
+    assertFalse(fun(9))
+
+  @Test
+  def testLambdaFromInlinedMethodCreator(): Unit =
+    val packed = inlinedMethodLambda()
+    val fun = packed.build()
+    assertTrue(fun(11))
+    assertFalse(fun(9))
+
+  @Test
+  def testLambdaFromInlinedMethodCreatorWithArg(): Unit =
+    val packed = inlinedMethodLambdaWithArg(10)
+    val fun = packed.build()
+    assertTrue(fun(11))
+    assertFalse(fun(9))
+
+  @Test
+  def testLambdaFromClassCreator(): Unit =
+    val packed = ClassWithLambda().lambda
+    val fun = packed.build()
+    assertTrue(fun(11))
+    assertFalse(fun(9))
+
+  @Test
+  def testLambdaFromClassMethodCreator(): Unit =
+    val packed = ClassWithLambda().methodLambda()
+    val fun = packed.build()
+    assertTrue(fun(11))
+    assertFalse(fun(9))
+
+  @Test
   def testInvalidCaptureIdent(): Unit =
     assertTrue:
       typeCheckErrors:
@@ -122,6 +183,29 @@ class SporkLambdaTests:
       typeCheckErrors:
         """
         Spork.apply[Int => Int] { x => Spork[Int => Int] { y => x + y }.build().apply(x) }
+        """
+      .contains:
+        """
+        Invalid capture of variable `x`. Use the first parameter of a spork's body to refer to the spork's environment.
+        """.strip()
+
+  @Test
+  def testInvalidCaptureMethodParameter(): Unit =
+    assertTrue:
+      typeCheckErrors:
+        """
+        def fun(x: Int): PackedSpork[Int => Boolean] = Spork.apply[Int => Boolean] { y => y > x }
+        """
+      .contains:
+        """
+        Invalid capture of variable `x`. Use the first parameter of a spork's body to refer to the spork's environment.
+        """.strip()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+        object ShouldFail:
+          def fun(x: Int): PackedSpork[Int => Boolean] = Spork.apply[Int => Boolean] { y => y > x }
         """
       .contains:
         """

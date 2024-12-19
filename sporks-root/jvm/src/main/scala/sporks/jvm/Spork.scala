@@ -23,23 +23,42 @@ object Spork {
   import scala.quoted.*
 
   private def applyMacro[T](bodyExpr: Expr[T])(using Type[T], Quotes): Expr[PackedLambda[T]] =
+    // Note:
+    // It is critical to keep the value assignment in the following code block.
+    // If it is removed, the resulting lambda will start capturing outer classes
+    // when directly nested inside of methods. Moreover, this is not (easily)
+    // detectable by macros, as it happens in later compilation stages. For
+    // example, the macro may say that the lambda has an empty parameter list,
+    // but after later compilation stages, the lambda will take the outer class
+    // as a parameter, thus failing the `build()` method which assumes that it
+    // has no parameters. The current solution seems to be working.
+
     Macros.checkBodyExpr(bodyExpr)
     '{
-      class Lambda extends SporkLambda[T]($bodyExpr)
-      (new Lambda()).pack()
+       val lambda = {
+         class Lambda extends SporkLambda[T]($bodyExpr)
+         (new Lambda()).pack()
+       }
+       lambda
     }
 
   private def applyMacroWithEnv[E, T](envExpr: Expr[E], bodyExpr: Expr[E => T], rwExpr: Expr[PackedSpork[ReadWriter[E]]])(using Type[E], Type[T], Quotes): Expr[PackedWithEnv[E, T]] =
     Macros.checkBodyExpr(bodyExpr)
     '{
-      class Lambda extends SporkLambda[E => T]($bodyExpr)
-      (new Lambda()).pack().packWithEnv($envExpr)(using $rwExpr)
+      val lambda = {
+        class Lambda extends SporkLambda[E => T]($bodyExpr)
+        (new Lambda()).pack().packWithEnv($envExpr)(using $rwExpr)
+      }
+      lambda
     }
 
   private def applyMacroWithCtx[E, T](envExpr: Expr[E], bodyExpr: Expr[E ?=> T], rwExpr: Expr[PackedSpork[ReadWriter[E]]])(using Type[E], Type[T], Quotes): Expr[PackedWithCtx[E, T]] =
     Macros.checkBodyExpr(bodyExpr)
     '{
-      class Lambda extends SporkLambda[E ?=> T]($bodyExpr.apply)
-      (new Lambda()).pack().packWithCtx($envExpr)(using $rwExpr)
+      val lambda = {
+        class Lambda extends SporkLambda[E ?=> T]($bodyExpr.apply)
+        (new Lambda()).pack().packWithCtx($envExpr)(using $rwExpr)
+      }
+      lambda
     }
 }
