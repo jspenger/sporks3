@@ -10,8 +10,9 @@ object Macros {
   private[sporks] def checkBodyExpr[T](bodyExpr: Expr[T])(using Quotes): Unit = {
     import quotes.reflect.*
 
-    def symIsToplevelObject(sym: Symbol): Boolean =
-      sym.flags.is(Flags.Module) && sym.owner.flags.is(Flags.Package)
+    // JS: Commented out
+    // def symIsToplevelObject(sym: Symbol): Boolean =
+    //   sym.flags.is(Flags.Module) && sym.owner.flags.is(Flags.Package)
 
     def ownerChainContains(sym: Symbol, transitiveOwner: Symbol): Boolean =
       if (sym.maybeOwner.isNoSymbol) false
@@ -26,7 +27,10 @@ object Macros {
       // JS: changed Ident -> Tree
       val acc = new TreeAccumulator[List[Tree]] {
         def foldTree(ids: List[Tree], tree: Tree)(owner: Symbol): List[Tree] = tree match {
-          case id @ Ident(_) => id :: ids
+          case id @ Ident(_) => 
+            // JS: ignore id if is type
+            if id.symbol.isType then ids
+            else id :: ids
           // JS: added special case for `this`
           case thiz @ This(_) => thiz :: ids
           case _ =>
@@ -51,29 +55,66 @@ object Macros {
         case _ => ()
       )
 
-      val allOwnersOK = foundSyms.forall(sym =>
-        ownerChainContains(sym, defdefSym) ||
-          symIsToplevelObject(sym) || ((!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(
-            sym.owner
-          )) || ((!sym.maybeOwner.isNoSymbol) && (!sym.owner.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.owner.owner))
-      ) // example: `ExecutionContext.Implicits.global`
+      // JS: reorganize the following code to reduce repetition and format for readability
+      // val allOwnersOK = foundSyms.forall(sym =>
+      //   ownerChainContains(sym, defdefSym) ||
+      //     symIsToplevelObject(sym) || ((!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(
+      //       sym.owner
+      //     )) || ((!sym.maybeOwner.isNoSymbol) && (!sym.owner.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.owner.owner))
+      // ) // example: `ExecutionContext.Implicits.global`
 
-      // report error if not all owners OK
-      if (!allOwnersOK) {
-        foundIds.foreach { id =>
-          val sym = id.symbol
-          val isOwnedByToplevelObject =
-            symIsToplevelObject(sym) || ((!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(
-              sym.owner
-            )) || ((!sym.maybeOwner.isNoSymbol) && (!sym.owner.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.owner.owner))
+      // // report error if not all owners OK
+      // if (!allOwnersOK) {
+      //   foundIds.foreach { id =>
+      //     val sym = id.symbol
+      //     val isOwnedByToplevelObject =
+      //       symIsToplevelObject(sym) || ((!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(
+      //         sym.owner
+      //       )) || ((!sym.maybeOwner.isNoSymbol) && (!sym.owner.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.owner.owner))
 
-          val isOwnedBySpore = ownerChainContains(sym, defdefSym)
-          if (!isOwnedByToplevelObject) {
-            // might find illegal capturing
-            if (!isOwnedBySpore)
-              // JS: id -> id.symbol
-              report.error(s"Invalid capture of variable `${id.symbol.name}`. Use the first parameter of a spork's body to refer to the spork's environment.", id.pos)
-          }
+      //     val isOwnedBySpore = ownerChainContains(sym, defdefSym)
+      //     if (!isOwnedByToplevelObject) {
+      //       // might find illegal capturing
+      //       if (!isOwnedBySpore)
+      //         // JS: id -> id.symbol
+      //         report.error(s"Invalid capture of variable `${id.symbol.name}`. Use the first parameter of a spork's body to refer to the spork's environment.", id.pos)
+      //     }
+
+      // JS: New method to check if symbol is top-level or is object nested in top-level object
+      def symIsToplevelObject(sym: Symbol): Boolean =
+          sym.isNoSymbol ||
+          (
+            (sym.flags.is(Flags.Module) || sym.flags.is(Flags.Package))
+            && symIsToplevelObject(sym.owner)
+          )
+
+      def isOwnedByToplevelObject(sym: Symbol): Boolean =
+        symIsToplevelObject(sym)
+        || (!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.owner)
+        // JS: commented out... otherwise the following case passes:
+        //     object Foo { def bar(x: Int) = Spork.apply[Int => Int] { y => x + y } }
+        //     ...which will capture `x`, and cause a runtime exception when the
+        //     spork is built (when Foo is top-level non-nested object).
+        //     As PH noted: "// example: `ExecutionContext.Implicits.global`" is
+        //     not allowed to be captured if commented out. Perhaps it is 
+        //     acceptable. The compiler does not always capture contextual
+        //     global givens, but it may do so in some cases, which would end in
+        //     a runtime exception.
+        // ||  (
+        //       (!sym.maybeOwner.isNoSymbol)
+        //       && (!sym.owner.maybeOwner.isNoSymbol)
+        //       && symIsToplevelObject(sym.owner.owner)
+        //     )
+      
+      def isOwnedBySpore(sym: Symbol): Boolean =
+        ownerChainContains(sym, defdefSym)
+
+      foundIds.foreach { id =>
+        val sym = id.symbol
+        if (!isOwnedByToplevelObject(sym)) {
+          if (!isOwnedBySpore(sym))
+            // JS: id -> id.symbol
+            report.error(s"Invalid capture of variable `${id.symbol.name}`. Use the first parameter of a spork's body to refer to the spork's environment.", id.pos)
         }
       }
     }

@@ -49,14 +49,20 @@ private def packMacroLambda[T](lambdaExpr: Expr[SporkLambda[T]])(using Type[T], 
   // No checks needed, all relevant checks are done in the lambda factory `Spork.apply`.
   '{ PackedLambda($lambdaExpr.getClass().getName()) }
 
+// Note:
+// We need to create our own stable top-level definition of the write method, as
+// otherwise it will cause a compiler error as the upickle write method is not 
+// considered a top-level object.
+private[sporks] def _write[T: Writer](t: T, indent: Int = -1, escapeUnicode: Boolean = false) = write[T](t, indent, escapeUnicode)
+
 extension [T, R](inline packed: PackedSpork[T => R]) {
   inline def packWithEnv(inline env: T)(using prw: PackedSpork[ReadWriter[T]]): PackedWithEnv[T, R] =
-    PackedWithEnv(packed, write(env)(using prw.build()), prw)
+    PackedWithEnv(packed, _write(env)(using prw.build()), prw)
 }
 
 extension [T, R](inline packed: PackedSpork[T ?=> R]) {
   inline def packWithCtx(inline env: T)(using prw: PackedSpork[ReadWriter[T]]): PackedWithCtx[T, R] =
-    PackedWithCtx(packed, write(env)(using prw.build()), prw)
+    PackedWithCtx(packed, _write(env)(using prw.build()), prw)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

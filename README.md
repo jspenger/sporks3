@@ -7,7 +7,7 @@ This fork is heavily modified to fit another project that uses Sporks3 for seria
 As such, it is not yet intended for general use, and will likely change significantly over the next few months.
 
 [![Build Status](https://github.com/jspenger/sporks3/actions/workflows/root-build-test.yaml/badge.svg)](https://github.com/jspenger/sporks3/actions/workflows/root-build-test.yaml)
-[![Build Status](https://github.com/jspenger/sporks3/actions/workflows/examples-build-test.yaml/badge.svg)](https://github.com/jspenger/sporks3/actions/workflows/examples-build-test.yaml)
+[![Build Status](https://github.com/jspenger/sporks3/actions/workflows/example-build-test.yaml/badge.svg)](https://github.com/jspenger/sporks3/actions/workflows/example-build-test.yaml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/jspenger/sporks3/blob/main/LICENSE)
 
 ## Project Overview

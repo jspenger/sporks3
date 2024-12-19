@@ -34,6 +34,12 @@ object SporkLambdaTests:
     val lambda = Spork.apply[Int => Boolean] { x => x > 10 }
     def methodLambda() = Spork.apply[Int => Boolean] { x => x > 10 }
 
+// // The following code should produce a compile error:
+// // Invalid capture of variable `x`. Use the first parameter of a spork's body to refer to the spork's environment.bloop
+// // ... but reproducing it with the typeCheckErrors macro is not possible as the object needs to be non-nested top-level.
+// object Issue001:
+//   def foo(x: Int): PackedSpork[Int => Boolean] = Spork.apply[Int => Boolean] { y => y > x }
+
 @RunWith(classOf[JUnit4])
 class SporkLambdaTests:
   import SporkLambdaTests.*
