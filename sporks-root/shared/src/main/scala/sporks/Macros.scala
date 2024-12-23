@@ -44,9 +44,14 @@ object Macros {
         }
       }
       val foundIds = acc.foldTree(List(), anonfunBody)(defdefSym)
-      val foundSyms = foundIds.map(id => id.symbol)
-      val names = foundSyms.map(sym => sym.name)
-      val ownerNames = foundSyms.map(sym => sym.owner.name)
+      // JS: Commented out as not used
+      // val foundSyms = foundIds.map(id => id.symbol)
+      // val names = foundSyms.map(sym => sym.name)
+      // // JS: added guard to not check if owner is NoSymbol as otherwise it may
+      // // throw an NoDenotation.owner exception.
+      // val ownerNames = foundSyms.flatMap(sym => 
+      //   if !sym.maybeOwner.isNoSymbol then List(sym.owner.name) else List.empty
+      // )
 
       // JS: add check and report error if captured `this`
       foundIds.foreach(id => id match
