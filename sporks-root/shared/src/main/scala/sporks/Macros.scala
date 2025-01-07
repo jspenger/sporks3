@@ -223,6 +223,7 @@ object Macros {
     // In addition, we do the following checks.
     // > It is not nested in another class.
     // > It has a constructor with an empty parameter list.
+    // > It has no context parameters in its parameter lists.
 
     def isClass(sym: Symbol): Boolean =
       sym.isClassDef && !sym.flags.is(Flags.Module)
@@ -249,6 +250,10 @@ object Macros {
       || sym.paramSymss.exists(_.isEmpty)
     }
 
+    def containsContextParamList(sym: Symbol): Boolean = {
+      sym.paramSymss.exists(_.exists(_.flags.is(Flags.Implicit)))
+    }
+
     val tree = builderExpr.asTerm
     val builderTpe = tree.tpe
     val owner = builderTpe.typeSymbol.maybeOwner
@@ -261,7 +266,7 @@ object Macros {
     }
     val constructor = builderTpe.typeSymbol.primaryConstructor
     if (!isPublic(constructor)) {
-      report.error(s"The provided SporkClass `${constructor.name}` does not have a public constructor.")
+      report.error(s"The provided SporkClass `${builderTpe.typeSymbol.name}` `${constructor.name}` does not have a public constructor.")
     }
     if (!isNotLocal(builderTpe.typeSymbol)) {
       report.error(s"The provided SporkClass `${builderTpe.typeSymbol.name}` is not a local class.")
@@ -270,7 +275,10 @@ object Macros {
       report.error(s"The provided SporkClass `${builderTpe.typeSymbol.name}` is nested in a class.")
     }
     if (!containsEmptyParamList(constructor)) {
-      report.error(s"The constructor of the provided SporkClass `${constructor.name}` does not have an empty parameter list.")
+      report.error(s"The constructor of the provided SporkClass `${builderTpe.typeSymbol.name}` `${constructor.name}` does not have an empty parameter list.")
+    }
+    if (containsContextParamList(constructor)) {
+      report.error(s"The constructor of the provided SporkClass `${builderTpe.typeSymbol.name}` `${constructor.name}` contains a context parameter list.")
     }
 
     '{ () }

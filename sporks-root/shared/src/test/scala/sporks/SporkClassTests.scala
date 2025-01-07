@@ -18,22 +18,55 @@ object SporkClassTests:
       new Local()
     }
 
+    class F[T]
+    class ClassWithContex[T: F] extends SporkClass[F[T]] ( summon )
+
 @RunWith(classOf[JUnit4])
 class SporkClassTests:
+  import SporkClassTests.*
 
   @Test
   def testObjectSporkClassError(): Unit =
-    // The provided SporkClass `sporks.SporkObjectTests.ShouldError.NotClzClz` is not a class.
     assertTrue:
-      typeCheckFail:
+      typeCheckErrors:
         """
         ShouldError.NotClzClz.pack()
         """
+      .contains:
+        """
+        The provided SporkClass `sporks.SporkClassTests.ShouldError.NotClzClz` is not a class.
+        """.strip()
 
-    // The provided SporkObject `notClzClz` is not a class.
     assertTrue:
-      typeCheckFail:
+      typeCheckErrors:
         """
         val notClzClz = ShouldError.NotClzClz
         notClzClz.pack()
         """
+      .contains:
+        """
+        The provided SporkClass `notClzClz` is not a class.
+        """.strip()
+
+  @Test
+  def testSporkClassWithContextParameterError(): Unit =
+    // Catches a common mistake in which implicit parameters are used in the 
+    // constructor. For example, this would seem like a reasonable thing to do, 
+    // but will not work:
+    // 
+    // class PackedRW[T: ReadWriter] extends SporkClass[ReadWriter[T]](summon[ReadWriter[T]])
+    // given PackedSpork[ReadWriter[T]] = PackedRW[T].pack()
+    // 
+    // // This will crash at runtime, as the init method is assumed to not have any params.
+    // summon[PackedSpork[ReadWriter[Int]]].build() 
+
+    assertTrue:
+      typeCheckErrors:
+        """
+        given ShouldError.F[Int] = new ShouldError.F[Int]()
+        ShouldError.ClassWithContex[Int].pack()
+        """
+      .contains:
+        """
+        The constructor of the provided SporkClass `ClassWithContex` `<init>` contains a context parameter list.
+        """.strip()
