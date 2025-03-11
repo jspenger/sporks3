@@ -1,6 +1,5 @@
 package sporks
 
-import sporks.*
 import scala.quoted.*
 
 object Macros {
@@ -22,12 +21,12 @@ object Macros {
       /* collect all identifier uses.
         check that they don't have an owner outside the anon fun.
         uses of top-level objects are OK.
-      */
+       */
 
       // JS: changed Ident -> Tree
       val acc = new TreeAccumulator[List[Tree]] {
         def foldTree(ids: List[Tree], tree: Tree)(owner: Symbol): List[Tree] = tree match {
-          case id @ Ident(_) => 
+          case id @ Ident(_) =>
             // JS: ignore id if is type
             if id.symbol.isType then ids
             else id :: ids
@@ -49,7 +48,7 @@ object Macros {
       // val names = foundSyms.map(sym => sym.name)
       // // JS: added guard to not check if owner is NoSymbol as otherwise it may
       // // throw an NoDenotation.owner exception.
-      // val ownerNames = foundSyms.flatMap(sym => 
+      // val ownerNames = foundSyms.flatMap(sym =>
       //   if !sym.maybeOwner.isNoSymbol then List(sym.owner.name) else List.empty
       // )
 
@@ -87,21 +86,21 @@ object Macros {
 
       // JS: New method to check if symbol is top-level or is object nested in top-level object
       def symIsToplevelObject(sym: Symbol): Boolean =
-          sym.isNoSymbol ||
+        sym.isNoSymbol ||
           (
             (sym.flags.is(Flags.Module) || sym.flags.is(Flags.Package))
-            && symIsToplevelObject(sym.owner)
+              && symIsToplevelObject(sym.owner)
           )
 
       def isOwnedByToplevelObject(sym: Symbol): Boolean =
         symIsToplevelObject(sym)
-        || (!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.owner)
+          || (!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.owner)
         // JS: commented out... otherwise the following case passes:
         //     object Foo { def bar(x: Int) = Spork.apply[Int => Int] { y => x + y } }
         //     ...which will capture `x`, and cause a runtime exception when the
         //     spork is built (when Foo is top-level non-nested object).
         //     As PH noted: "// example: `ExecutionContext.Implicits.global`" is
-        //     not allowed to be captured if commented out. Perhaps it is 
+        //     not allowed to be captured if commented out. Perhaps it is
         //     acceptable. The compiler does not always capture contextual
         //     global givens, but it may do so in some cases, which would end in
         //     a runtime exception.
@@ -110,7 +109,7 @@ object Macros {
         //       && (!sym.owner.maybeOwner.isNoSymbol)
         //       && symIsToplevelObject(sym.owner.owner)
         //     )
-      
+
       def isOwnedBySpore(sym: Symbol): Boolean =
         ownerChainContains(sym, defdefSym)
 

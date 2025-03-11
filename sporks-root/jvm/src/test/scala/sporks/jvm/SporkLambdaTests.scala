@@ -7,7 +7,6 @@ import org.junit.Assert.*
 
 import sporks.given
 import sporks.*
-import sporks.jvm.*
 import sporks.TestUtils.*
 
 object SporkLambdaTests:

@@ -1,8 +1,8 @@
 package sporks
 
-import sporks.Reflect
 import upickle.default.*
 import scala.quoted.*
+import sporks.Reflect
 
 ////////////////////////////////////////////////////////////////////////////////
 // Spork builders
@@ -51,7 +51,7 @@ private def packMacroLambda[T](lambdaExpr: Expr[SporkLambda[T]])(using Type[T], 
 
 // Note:
 // We need to create our own stable top-level definition of the write method, as
-// otherwise it will cause a compiler error as the upickle write method is not 
+// otherwise it will cause a compiler error as the upickle write method is not
 // considered a top-level object.
 private[sporks] def _write[T: Writer](t: T, indent: Int = -1, escapeUnicode: Boolean = false) = write[T](t, indent, escapeUnicode)
 

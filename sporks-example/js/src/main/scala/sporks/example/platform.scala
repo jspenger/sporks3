@@ -1,6 +1,6 @@
 package sporks.example
 
-package utils
+package platform
 
 import upickle.default.*
 import scalajs.js.Dynamic.global

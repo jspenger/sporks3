@@ -3,7 +3,7 @@ package sporks.example
 import sporks.given
 import sporks.*
 import sporks.jvm.*
-import sporks.example.utils.*
+import sporks.example.platform.*
 
 val Lambda1 = Spork[Int => String] { x => x.toString.reverse }
 

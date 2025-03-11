@@ -2,7 +2,7 @@ package sporks.example
 
 import sporks.given
 import sporks.*
-import sporks.example.utils.*
+import sporks.example.platform.*
 
 object Spork1 extends SporkObject[Int => String](x => x.toString.reverse)
 

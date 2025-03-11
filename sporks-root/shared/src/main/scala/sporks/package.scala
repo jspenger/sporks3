@@ -1,7 +1,6 @@
 package object sporks {
 
   import upickle.default.*
-  import scala.util.*
 
   //////////////////////////////////////////////////////////////////////////////
   // ReadWriter[PackedSpork[T]]
@@ -53,17 +52,17 @@ package object sporks {
   //////////////////////////////////////////////////////////////////////////////
 
   // Note:
-  // `PackedSpork[ReadWriter[PackedSpork[T]]]`s are implemented as 
+  // `PackedSpork[ReadWriter[PackedSpork[T]]]`s are implemented as
   // `SporkObject`s instead of `SporkClass`es. This is for optimization reasons,
-  // a packed spork can use the same `ReadWriter` for all type parameters T. To 
+  // a packed spork can use the same `ReadWriter` for all type parameters T. To
   // make it work, the object is cast to `PackedSpork[T]` using `asInstanceOf`.
-  // This should have no effect on the runtime behavior, as the type parameter 
+  // This should have no effect on the runtime behavior, as the type parameter
   // T is erased.
-  // 
-  // An implementation with `SporkClass` would look like this:
+  //
+  // An alternative implementation with `SporkClass` would look like this:
   // class PACKED_RW_T[T] extends SporkClass[ReadWriter[PackedSpork[T]]](macroRW)
   // given packed_rw_t[T]: PackedSpork[ReadWriter[PackedSpork[T]]] = (new PACKED_RW_T()).pack()
-    
+
   object PACKED_RW extends SporkObject[ReadWriter[PackedSpork[_]]](macroRW)
   given packed_rw[T]: PackedSpork[ReadWriter[PackedSpork[T]]] = PACKED_RW.pack().asInstanceOf
 
