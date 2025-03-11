@@ -28,6 +28,8 @@ test:
 test-example:
 	sbt -v "exampleJVM / runMain sporks.example.BuilderExample"
 	sbt -v "exampleJVM / runMain sporks.example.LambdaExample"
+	sbt -v "exampleJVM / runMain sporks.example.SporkFunGreeter"
+	sbt -v "exampleJVM / runMain sporks.example.experimental.SporkFunLambdaGreeter"
 	sbt -v "exampleJS / run"
 	sbt -v "exampleNative / run"
 

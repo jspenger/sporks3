@@ -22,7 +22,7 @@ object Spork {
 
   import scala.quoted.*
 
-  private def applyMacro[T](bodyExpr: Expr[T])(using Type[T], Quotes): Expr[PackedLambda[T]] =
+  private[sporks] def applyMacro[T](bodyExpr: Expr[T])(using Type[T], Quotes): Expr[PackedLambda[T]] =
     // Note:
     // It is critical to keep the value assignment in the following code block.
     // If it is removed, the resulting lambda will start capturing outer classes
@@ -42,7 +42,7 @@ object Spork {
        lambda
     }
 
-  private def applyMacroWithEnv[E, T](envExpr: Expr[E], bodyExpr: Expr[E => T], rwExpr: Expr[PackedSpork[ReadWriter[E]]])(using Type[E], Type[T], Quotes): Expr[PackedWithEnv[E, T]] =
+  private[sporks] def applyMacroWithEnv[E, T](envExpr: Expr[E], bodyExpr: Expr[E => T], rwExpr: Expr[PackedSpork[ReadWriter[E]]])(using Type[E], Type[T], Quotes): Expr[PackedWithEnv[E, T]] =
     Macros.checkBodyExpr(bodyExpr)
     '{
       val lambda = {
@@ -52,7 +52,7 @@ object Spork {
       lambda
     }
 
-  private def applyMacroWithCtx[E, T](envExpr: Expr[E], bodyExpr: Expr[E ?=> T], rwExpr: Expr[PackedSpork[ReadWriter[E]]])(using Type[E], Type[T], Quotes): Expr[PackedWithCtx[E, T]] =
+  private[sporks] def applyMacroWithCtx[E, T](envExpr: Expr[E], bodyExpr: Expr[E ?=> T], rwExpr: Expr[PackedSpork[ReadWriter[E]]])(using Type[E], Type[T], Quotes): Expr[PackedWithCtx[E, T]] =
     Macros.checkBodyExpr(bodyExpr)
     '{
       val lambda = {
