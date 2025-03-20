@@ -6,6 +6,7 @@ import upickle.default.*
 import java.nio.file.*
 import java.nio.charset.StandardCharsets
 
+
 inline def readFromFile[T: ReadWriter](fname: String): T =
   val path = Paths.get(fname)
   val json = Files.readString(path)

@@ -1,6 +1,8 @@
 package sporks
 
+
 object Reflect {
+
   import scala.scalanative.reflect.{Reflect => NativeReflect}
 
   export scala.scalanative.reflect.annotation.EnableReflectiveInstantiation

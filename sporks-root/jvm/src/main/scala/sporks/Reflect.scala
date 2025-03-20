@@ -1,6 +1,8 @@
 package sporks
 
+
 object Reflect {
+
   import scala.annotation.StaticAnnotation
   // Dummy annotation as JVM reflection is enabled by default
   class EnableReflectiveInstantiation extends StaticAnnotation

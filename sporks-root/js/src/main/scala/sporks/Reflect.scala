@@ -1,6 +1,8 @@
 package sporks
 
+
 object Reflect {
+
   import scala.scalajs.reflect.{Reflect => JSReflect}
 
   export scala.scalajs.reflect.annotation.EnableReflectiveInstantiation

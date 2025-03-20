@@ -5,6 +5,7 @@ package platform
 import upickle.default.*
 import scalajs.js.Dynamic.global
 
+
 private def readFileSync(path: String, encoding: String): String =
   val fs = global.require("fs")
   fs.readFileSync(path, encoding).asInstanceOf[String]

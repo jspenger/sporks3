@@ -10,20 +10,20 @@ As such, it is not yet intended for general use, and will likely change signific
 
 Pickle and unpickle your closures.
 There are three ways in which you can create a spork: 
-- as an object, extending the `SporkObject` trait
-- as a class, extending the `SporkClass` trait
-- or, as a lambda, using the `Spork.apply` lambda factory (JVM only)
+- as an object, extending the `SporkObjectBuilder` trait
+- as a class, extending the `SporkClassBuilder` trait
+- or, as a lambda, using the `SporkBuilder.apply` lambda factory (JVM only)
 
-Using any of these three methods, you can create a `PackedSpork` object, by calling the `pack` method on a SporkObject or SporkClass object, or by using the lambda factory directly.
+Using any of these three methods, you can create a `PackedSpork` object, by calling the `pack` method on a SporkObjectBuilder or SporkClassBuilder object, or by using the lambda factory directly.
 ```scala
-SporkObject[T](fun: T) -- pack() --> PackedSpork[T]
-SporkClass [T](fun: T) -- pack() --> PackedSpork[T]
-Spork.apply[T](fun: T) ------------> PackedSpork[T]
+SporkObjectBuilder[T](fun: T) -- pack() --> PackedSpork[T]
+SporkClassBuilder [T](fun: T) -- pack() --> PackedSpork[T]
+SporkBuilder.apply[T](fun: T) ------------> PackedSpork[T]
 ```
 
-A PackedSpork can be used to `build` the closure. 
+A PackedSpork can be used to `unwrap` the closure. 
 ```scala
-PackedSpork[T] -- build() --> T
+PackedSpork[T] -- unwrap() --> T
 ```
 
 Additionally, a PackedSpork can be partially applied to a serializable `env`ironment variable, using either the `packWithEnv` or the `packWithCtx` methods.
@@ -42,23 +42,23 @@ import sporks.given
 import sporks.jvm.*
 ```
 
-SporkObjects are the most robust way to create sporks.
+SporkObjectBuilders are the most robust way to create sporks.
 ```scala
 object Predicate
-    extends SporkObject[Int => Boolean]({ x =>
+    extends SporkObjectBuilder[Int => Boolean]({ x =>
       x > 10
     })
 
 object Filter
-    extends SporkObject[
+    extends SporkObjectBuilder[
       PackedSpork[Int => Boolean] => Int => Boolean
     ]({ env => x =>
-      env.build().apply(x)
+      env.unwrap().apply(x)
     })
 
 val predicate = Predicate.pack()
 val filter    = Filter.pack().packWithEnv(predicate)
-val fun       = filter.build()
+val fun       = filter.unwrap()
 fun(11) // true
 fun(9) // false
 ```
@@ -69,9 +69,9 @@ import upickle.default.* // imports: read, write, etc.
 
 // ...
 val filter    = Filter.pack().packWithEnv(predicate)
-val pickled   = write(filter) // "PackedWithEnv(PackedObject(sporks.Filter$),{"$type":"sporks.PackedObject","fun":"sporks.Predicate$"},PackedClass(sporks.package$PACKED_OBJECT_RW_T))"
+val pickled   = write(filter) // "PackedWithEnv(PackedObject(sporks.Filter$),{"$type":"sporks.PackedObject","fun":"sporks.Predicate$"},PackedClass(sporks.ReadWriters$PACKED_OBJECT_RW_T))"
 val unpickled = read[PackedSpork[Int => Boolean]](pickled)
-val fun       = unpickled.build()
+val fun       = unpickled.unwrap()
 fun(11) // true
 fun(9) // false
 ```
@@ -79,28 +79,28 @@ fun(9) // false
 Lambdas from the Spork factory are the most convenient way to create sporks.
 However, they are only supported on the JVM.
 ```scala
-val predicate = Spork.apply[Int => Boolean]({ x => x > 10 })
+val predicate = SporkBuilder.apply[Int => Boolean]({ x => x > 10 })
 val filter =
-  Spork.apply[
+  SporkBuilder.apply[
     PackedSpork[Int => Boolean] => Int => Boolean
   ]({ env => x =>
-    env.build().apply(x)
+    env.unwrap().apply(x)
   })
-val fun = filter.packWithEnv(predicate).build()
+val fun = filter.packWithEnv(predicate).unwrap()
 fun(11) // true
 fun(9) // false
 ```
 
-The SporkClass builder is the most flexible way to create sporks.
+The SporkClassBuilder builder is the most flexible way to create sporks.
 However, it is not recommended to use it unless you have a good reason to do so.
 ```scala
-class Constant[T] extends SporkClass[T => T]({ env => env })
+class Constant[T] extends SporkClassBuilder[T => T]({ env => env })
 val constant = new Constant[Int]().pack().packWithEnv(42)
-constant.build() // 42
+constant.unwrap() // 42
 ```
 
-The SporkClass builder is useful for leveraging type parameters on JS and Native (where spork lambdas are not supported), or for creating spork combinators (see an example below for packing environment variables).
-However, use the SporkObject instead if you can.
+The SporkClassBuilder builder is useful for leveraging type parameters on JS and Native (where spork lambdas are not supported), or for creating spork combinators (see an example below for packing environment variables).
+However, use the SporkObjectBuilder instead if you can.
 
 You can find more examples in the [sporks-example](sporks-example) directory.
 
@@ -116,20 +116,20 @@ You can also create your own packed picklers, examples of this are in [sporks-ro
 Sporks3 leverages the Scala 3 macro system to make the serialization/pickling process as safe as possible.
 It does so by the following principles (c.f. [[Miller, Haller, and Odersky 2014]](https://link.springer.com/chapter/10.1007/978-3-662-44202-9_13), [[Haller 2022]](https://dl.acm.org/doi/10.1145/3550198.3550428)).
 
-**SporkObject.**
-Compile time checks ensure that any `SporkObject` is a top-level object, therefore satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements.
-Thus, invoking the `pack` and `build` methods are guaranteed to not cause a runtime error.
-Further, as a `SporkObject` is a top-level object, it can only access other top-level singleton objects.
+**SporkObjectBuilder.**
+Compile time checks ensure that any `SporkObjectBuilder` is a top-level object, therefore satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements.
+Thus, invoking the `pack` and `unwrap` methods are guaranteed to not cause a runtime error.
+Further, as a `SporkObjectBuilder` is a top-level object, it can only access other top-level singleton objects.
 
-**SporkClass.**
-Compile time checks ensure that any `SporkClass` is concrete; has a public constructor; and is a not a local class, e.g. nested inside a method, thus satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements
-Furthermore, checks ensure that a `SporkClass` cannot be nested inside another class, i.e., it must be a top-level class.
-Last, a final check ensures that a `SporkClass`'s constructor has an empty parameter list, this is an internal requirement of the implementation.
-This way, invoking the `pack` and `build` methods are guaranteed to not cause a runtime error.
+**SporkClassBuilder.**
+Compile time checks ensure that any `SporkClassBuilder` is concrete; has a public constructor; and is a not a local class, e.g. nested inside a method, thus satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements
+Furthermore, checks ensure that a `SporkClassBuilder` cannot be nested inside another class, i.e., it must be a top-level class.
+Last, a final check ensures that a `SporkClassBuilder`'s constructor has an empty parameter list, this is an internal requirement of the implementation.
+This way, invoking the `pack` and `unwrap` methods are guaranteed to not cause a runtime error.
 
 **Spork Lambda.**
 A compile time check ensures that the body of the lambda only accesses its own parameters and other top-level object singletons.
-By this mechanism, it is guaranteed to not cause a runtime error to invoke `pack` and `build` methods on it.
+By this mechanism, it is guaranteed to not cause a runtime error to invoke `pack` and `unwrap` methods on it.
 
 ## Roadmap
 - Add the `Duplicable` trait from Spores3, together with weaker and stronger sporks.
