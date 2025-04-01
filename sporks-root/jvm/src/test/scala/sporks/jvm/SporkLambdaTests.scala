@@ -66,7 +66,7 @@ class SporkLambdaTests:
 
   @Test
   def testPackedLambdaReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"}"""
+    val json = """{"$type":"sporks.PackedSpork.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"}"""
 
     val packed = upickle.default.write(lambda)
     assertEquals(json, packed)
@@ -77,7 +77,7 @@ class SporkLambdaTests:
 
   @Test
   def testNestedLambdaReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$NestedLambda$Lambda$13"}"""
+    val json = """{"$type":"sporks.PackedSpork.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$NestedLambda$Lambda$13"}"""
 
     val packed = upickle.default.write(NestedLambda.lambda)
     assertEquals(json, packed)
@@ -88,8 +88,8 @@ class SporkLambdaTests:
 
   @Test
   def testPackedLambdaWithEnvReadWriter(): Unit =
-    val json9 = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"},"packedEnv":{"$type":"sporks.PackedEnv","env":"9","rw":{"$type":"sporks.PackedObject","fun":"sporks.ReadWriters$INT_RW$"}}}"""
-    val json11 = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"},"packedEnv":{"$type":"sporks.PackedEnv","env":"11","rw":{"$type":"sporks.PackedObject","fun":"sporks.ReadWriters$INT_RW$"}}}"""
+    val json9 = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"9","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$INT_RW$"}}}"""
+    val json11 = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"11","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$INT_RW$"}}}"""
 
     val packed9 = upickle.default.write(lambda.packWithEnv(9))
     val packed11 = upickle.default.write(lambda.packWithEnv(11))
@@ -103,7 +103,7 @@ class SporkLambdaTests:
 
   @Test
   def testLambdaWithEnvConstructorReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$12"},"packedEnv":{"$type":"sporks.PackedEnv","env":"11","rw":{"$type":"sporks.PackedObject","fun":"sporks.ReadWriters$INT_RW$"}}}"""
+    val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$12"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"11","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$INT_RW$"}}}"""
 
     val packed = upickle.default.write(lambdaWithEnv)
     assertEquals(json, packed)

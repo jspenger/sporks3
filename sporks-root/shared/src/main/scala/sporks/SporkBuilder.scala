@@ -4,7 +4,8 @@ import upickle.default.*
 import scala.quoted.*
 
 import sporks.Reflect
-
+import sporks.Spork.*
+import sporks.PackedSpork.*
 
 @Reflect.EnableReflectiveInstantiation
 trait SporkObjectBuilder[+T](val fun: T) {

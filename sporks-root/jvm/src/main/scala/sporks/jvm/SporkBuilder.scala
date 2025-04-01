@@ -1,6 +1,8 @@
 package sporks.jvm
 
 import sporks.*
+import sporks.Spork.*
+import sporks.PackedSpork.*
 import upickle.default.*
 
 
