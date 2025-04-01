@@ -101,7 +101,7 @@ class SporkObjectBuilderTests:
 
   @Test
   def testPackedSporkReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedObject","fun":"sporks.SporkObjectBuilderTests$Predicate$"}"""
+    val json = """{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$Predicate$"}"""
 
     val packed = upickle.default.write(Predicate.pack())
     assertEquals(json, packed)
@@ -119,7 +119,7 @@ class SporkObjectBuilderTests:
 
   @Test
   def testNestedPackedSporkReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedObject","fun":"sporks.SporkObjectBuilderTests$NestedBuilder$Predicate$"}"""
+    val json = """{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$NestedBuilder$Predicate$"}"""
 
     val packed = upickle.default.write(NestedBuilder.Predicate.pack())
     assertEquals(json, packed)
@@ -137,7 +137,7 @@ class SporkObjectBuilderTests:
 
   @Test
   def testPackedSporkReadWriterWithEnv(): Unit =
-    val json = """{"$type":"sporks.PackedWithEnv","packed":{"$type":"sporks.PackedObject","fun":"sporks.SporkObjectBuilderTests$HigherLevelFilter$"},"packedEnv":{"$type":"sporks.PackedEnv","env":"{\"$type\":\"sporks.PackedObject\",\"fun\":\"sporks.SporkObjectBuilderTests$Predicate$\"}","rw":{"$type":"sporks.PackedObject","fun":"sporks.ReadWriters$PACKED_OBJECT_RW$"}}}"""
+    val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$HigherLevelFilter$"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"{\"$type\":\"sporks.PackedSpork.PackedObject\",\"fun\":\"sporks.SporkObjectBuilderTests$Predicate$\"}","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$PACKED_OBJECT_RW$"}}}"""
 
     val predicate = Predicate.pack()
     val filter = HigherLevelFilter.pack().packWithEnv(predicate)

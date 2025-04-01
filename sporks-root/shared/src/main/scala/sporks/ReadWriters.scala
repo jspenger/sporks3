@@ -5,6 +5,8 @@ private[sporks] object ReadWriters {
   import upickle.default.*
 
   import sporks.*
+  import sporks.Spork.*
+  import sporks.PackedSpork.*
 
   //////////////////////////////////////////////////////////////////////////////
   // ReadWriter[PackedSpork[T]]

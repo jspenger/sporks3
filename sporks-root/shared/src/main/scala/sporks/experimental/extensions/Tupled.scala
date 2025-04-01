@@ -1,4 +1,4 @@
-package sporks.extensions
+package sporks.experimental.extensions
 
 import sporks.*
 import sporks.given
@@ -33,13 +33,13 @@ object Tupled {
   extension [T1, T2, R](packed1: PackedSpork[Function1[Tuple2[T1, T2], R]]) { def untupled2(): PackedSpork[Function2[T1, T2, R]] = (new Untupled2[T1, T2, R]()).pack().packWithEnv(packed1) }
   extension [T1, T2, T3, R](packed1: PackedSpork[Function1[Tuple3[T1, T2, T3], R]]) { def untupled3(): PackedSpork[Function3[T1, T2, T3, R]] = (new Untupled3[T1, T2, T3, R]()).pack().packWithEnv(packed1) }
 
-  extension [R](spork1: Spork[Function0[R]]) { def tupled02(): Spork[Function1[EmptyTuple, R]] = spork1.pack().tupled0().unpack() }
-  extension [T1, R](spork1: Spork[Function1[T1, R]]) { def tupled12(): Spork[Function1[Tuple1[T1], R]] = spork1.pack().tupled1().unpack() }
-  extension [T1, T2, R](spork1: Spork[Function2[T1, T2, R]]) { def tupled22(): Spork[Function1[Tuple2[T1, T2], R]] = spork1.pack().tupled2().unpack() }
-  extension [T1, T2, T3, R](spork1: Spork[Function3[T1, T2, T3, R]]) { def tupled32(): Spork[Function1[Tuple3[T1, T2, T3], R]] = spork1.pack().tupled3().unpack() }
-  extension [R](spork1: Spork[Function1[EmptyTuple, R]]) { def untupled02(): Spork[Function0[R]] = spork1.pack().untupled0().unpack() }
-  extension [T1, R](spork1: Spork[Function1[Tuple1[T1], R]]) { def untupled12(): Spork[Function1[T1, R]] = spork1.pack().untupled1().unpack() }
-  extension [T1, T2, R](spork1: Spork[Function1[Tuple2[T1, T2], R]]) { def untupled22(): Spork[Function2[T1, T2, R]] = spork1.pack().untupled2().unpack() }
-  extension [T1, T2, T3, R](spork1: Spork[Function1[Tuple3[T1, T2, T3], R]]) { def untupled32(): Spork[Function3[T1, T2, T3, R]] = spork1.pack().untupled3().unpack() }
+  extension [R](spork1: Spork[Function0[R]]) { def tupled0(): Spork[Function1[EmptyTuple, R]] = spork1.pack().tupled0().unpack() }
+  extension [T1, R](spork1: Spork[Function1[T1, R]]) { def tupled1(): Spork[Function1[Tuple1[T1], R]] = spork1.pack().tupled1().unpack() }
+  extension [T1, T2, R](spork1: Spork[Function2[T1, T2, R]]) { def tupled2(): Spork[Function1[Tuple2[T1, T2], R]] = spork1.pack().tupled2().unpack() }
+  extension [T1, T2, T3, R](spork1: Spork[Function3[T1, T2, T3, R]]) { def tupled3(): Spork[Function1[Tuple3[T1, T2, T3], R]] = spork1.pack().tupled3().unpack() }
+  extension [R](spork1: Spork[Function1[EmptyTuple, R]]) { def untupled0(): Spork[Function0[R]] = spork1.pack().untupled0().unpack() }
+  extension [T1, R](spork1: Spork[Function1[Tuple1[T1], R]]) { def untupled1(): Spork[Function1[T1, R]] = spork1.pack().untupled1().unpack() }
+  extension [T1, T2, R](spork1: Spork[Function1[Tuple2[T1, T2], R]]) { def untupled2(): Spork[Function2[T1, T2, R]] = spork1.pack().untupled2().unpack() }
+  extension [T1, T2, T3, R](spork1: Spork[Function1[Tuple3[T1, T2, T3], R]]) { def untupled3(): Spork[Function3[T1, T2, T3, R]] = spork1.pack().untupled3().unpack() }
 
 }
