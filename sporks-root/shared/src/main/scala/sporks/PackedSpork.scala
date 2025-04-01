@@ -1,15 +1,18 @@
 package sporks
 
+import scala.annotation.implicitNotFound
 import upickle.default.*
 
 
 sealed trait PackedSpork[+T] {
+  import sporks.Spork.*
+  import sporks.PackedSpork.*
 
-  def packWithEnv[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using ev: PackedSpork[T] <:< PackedSpork[T1 => R]): PackedWithEnv[T1, R] = {
+  def packWithEnv[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using @implicitNotFound(CanPackWithEnv.MSG) ev: CanPackWithEnv[T, T1, R]): PackedWithEnv[T1, R] = {
     PackedWithEnv(this, PackedEnv(write(env)(using prw.unwrap()), prw))
   }
 
-  def packWithCtx[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using ev: PackedSpork[T] <:< PackedSpork[T1 ?=> R]): PackedWithCtx[T1, R] = {
+  def packWithCtx[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using @implicitNotFound(CanPackWithCtx.MSG) ev: CanPackWithCtx[T, T1, R]): PackedWithCtx[T1, R] = {
     PackedWithCtx(this, PackedEnv(write(env)(using prw.unwrap()), prw))
   }
 
@@ -35,9 +38,20 @@ sealed trait PackedSpork[+T] {
 }
 
 
-final case class PackedObject[+T](fun: String) extends PackedSpork[T]
-final case class PackedClass[+T] (fun: String) extends PackedSpork[T]
-final case class PackedLambda[+T](fun: String) extends PackedSpork[T]
-final case class PackedEnv[E]        (env: String, rw: PackedSpork[ReadWriter[E]])             extends PackedSpork[E]
-final case class PackedWithEnv[E, +T](packed: PackedSpork[E => T],  packedEnv: PackedSpork[E]) extends PackedSpork[T]
-final case class PackedWithCtx[E, +T](packed: PackedSpork[E ?=> T], packedEnv: PackedSpork[E]) extends PackedSpork[T]
+object PackedSpork {
+
+  // Static:
+  final case class PackedObject[+T](fun: String) extends PackedSpork[T]
+  final case class PackedClass[+T] (fun: String) extends PackedSpork[T]
+  final case class PackedLambda[+T](fun: String) extends PackedSpork[T]
+  // Dynamic:
+  final case class PackedEnv[E]        (env: String, rw: PackedSpork[ReadWriter[E]])             extends PackedSpork[E]
+  final case class PackedWithEnv[E, +T](packed: PackedSpork[E => T],  packedEnv: PackedSpork[E]) extends PackedSpork[T]
+  final case class PackedWithCtx[E, +T](packed: PackedSpork[E ?=> T], packedEnv: PackedSpork[E]) extends PackedSpork[T]
+
+  private type CanPackWithEnv[T, T1, R] = PackedSpork[T] <:< PackedSpork[T1 => R]
+  private object CanPackWithEnv { inline val MSG = "Cannot pack contained type ${T} with environment type ${T1}. It is not a function type of ${T1} => ${R}." }
+
+  private type CanPackWithCtx[T, T1, R] = PackedSpork[T] <:< PackedSpork[T1 ?=> R]
+  private object CanPackWithCtx { inline val MSG = "Cannot pack contained type ${T} with context type ${T1}. It is not a function type of ${T1} ?=> ${R}." }
+}

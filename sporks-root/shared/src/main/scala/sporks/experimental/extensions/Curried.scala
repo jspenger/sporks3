@@ -1,4 +1,4 @@
-package sporks.extensions
+package sporks.experimental.extensions
 
 import sporks.*
 import sporks.given
@@ -33,13 +33,13 @@ object Curried {
   extension [T1, T2, R](packed1: PackedSpork[Function1[T1, Function1[T2, R]]]) { def uncurried2(): PackedSpork[Function2[T1, T2, R]] = (new Uncurried2[T1, T2, R]()).pack().packWithEnv(packed1) }
   extension [T1, T2, T3, R](packed1: PackedSpork[Function1[T1, Function1[T2, Function1[T3, R]]]]) { def uncurried3(): PackedSpork[Function3[T1, T2, T3, R]] = (new Uncurried3[T1, T2, T3, R]()).pack().packWithEnv(packed1) }
 
-  extension [R](spork1: Spork[Function0[R]]) { def curried02(): Spork[Function0[R]] = spork1.pack().curried0().unpack() }
-  extension [T1, R](spork1: Spork[Function1[T1, R]]) { def curried12(): Spork[Function1[T1, R]] = spork1.pack().curried1().unpack() }
-  extension [T1, T2, R](spork1: Spork[Function2[T1, T2, R]]) { def curried22(): Spork[Function1[T1, Function1[T2, R]]] = spork1.pack().curried2().unpack() }
-  extension [T1, T2, T3, R](spork1: Spork[Function3[T1, T2, T3, R]]) { def curried32(): Spork[Function1[T1, Function1[T2, Function1[T3, R]]]] = spork1.pack().curried3().unpack() }
-  extension [R](spork1: Spork[Function0[R]]) { def uncurried02(): Spork[Function0[R]] = spork1.pack().uncurried0().unpack() }
-  extension [T1, R](spork1: Spork[Function1[T1, R]]) { def uncurried12(): Spork[Function1[T1, R]] = spork1.pack().uncurried1().unpack() }
-  extension [T1, T2, R](spork1: Spork[Function1[T1, Function1[T2, R]]]) { def uncurried22(): Spork[Function2[T1, T2, R]] = spork1.pack().uncurried2().unpack() }
-  extension [T1, T2, T3, R](spork1: Spork[Function1[T1, Function1[T2, Function1[T3, R]]]]) { def uncurried32(): Spork[Function3[T1, T2, T3, R]] = spork1.pack().uncurried3().unpack() }
+  extension [R](spork1: Spork[Function0[R]]) { def curried0(): Spork[Function0[R]] = spork1.pack().curried0().unpack() }
+  extension [T1, R](spork1: Spork[Function1[T1, R]]) { def curried1(): Spork[Function1[T1, R]] = spork1.pack().curried1().unpack() }
+  extension [T1, T2, R](spork1: Spork[Function2[T1, T2, R]]) { def curried2(): Spork[Function1[T1, Function1[T2, R]]] = spork1.pack().curried2().unpack() }
+  extension [T1, T2, T3, R](spork1: Spork[Function3[T1, T2, T3, R]]) { def curried3(): Spork[Function1[T1, Function1[T2, Function1[T3, R]]]] = spork1.pack().curried3().unpack() }
+  extension [R](spork1: Spork[Function0[R]]) { def uncurried0(): Spork[Function0[R]] = spork1.pack().uncurried0().unpack() }
+  extension [T1, R](spork1: Spork[Function1[T1, R]]) { def uncurried1(): Spork[Function1[T1, R]] = spork1.pack().uncurried1().unpack() }
+  extension [T1, T2, R](spork1: Spork[Function1[T1, Function1[T2, R]]]) { def uncurried2(): Spork[Function2[T1, T2, R]] = spork1.pack().uncurried2().unpack() }
+  extension [T1, T2, T3, R](spork1: Spork[Function1[T1, Function1[T2, Function1[T3, R]]]]) { def uncurried3(): Spork[Function3[T1, T2, T3, R]] = spork1.pack().uncurried3().unpack() }
 
 }
