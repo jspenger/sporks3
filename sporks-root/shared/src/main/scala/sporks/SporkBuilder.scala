@@ -7,45 +7,49 @@ import sporks.Reflect
 import sporks.Spork.*
 import sporks.PackedSpork.*
 
+
 @Reflect.EnableReflectiveInstantiation
 trait SporkObjectBuilder[+T](val fun: T) {
+  import SporkObjectBuilder.*
 
   final inline def pack(): PackedObject[T] =
-    ${ SporkObjectBuilder.packMacro('this) }
+    ${ packMacro('this) }
 
   final inline def build(): SporkObject[T] =
-    ${ SporkObjectBuilder.buildMacro('this) }
+    ${ buildMacro('this) }
 }
 
 
 @Reflect.EnableReflectiveInstantiation
 trait SporkClassBuilder[+T](val fun: T) {
+  import SporkClassBuilder.*
 
   final inline def pack(): PackedClass[T] =
-    ${ SporkClassBuilder.packMacro('this) }
+    ${ packMacro('this) }
 
   final inline def build(): SporkClass[T] =
-    ${ SporkClassBuilder.buildMacro('this) }
+    ${ buildMacro('this) }
 }
 
 
 @Reflect.EnableReflectiveInstantiation
 private[sporks] trait SporkLambdaBuilder[+T](val fun: T) {
+  import SporkLambdaBuilder.*
 
   final inline def pack(): PackedLambda[T] =
-    ${ SporkLambdaBuilder.packMacro('this) }
+    ${ packMacro('this) }
 
   final inline def build(): SporkLambda[T] =
-    ${ SporkLambdaBuilder.buildMacro('this) }
+    ${ buildMacro('this) }
 }
 
 
 object SporkEnvBuilder {
   def apply[T](env: T)(using rw: PackedSpork[ReadWriter[T]]): PackedEnv[T] =
-    this.pack(env)(using rw)
+    PackedEnv(write(env)(using rw.unwrap()), rw)
 
   def pack[T](env: T)(using rw: PackedSpork[ReadWriter[T]]): PackedEnv[T] =
-    PackedEnv(write(env)(using rw.unwrap()), rw)
+    this.apply(env)(using rw)
 
   def build[T](env: T)(using rw: Spork[ReadWriter[T]]): SporkEnv[T] =
     SporkEnv(env, rw)
@@ -53,7 +57,6 @@ object SporkEnvBuilder {
 
 
 private[sporks] object SporkObjectBuilder {
-
   def toString[T](builder: SporkObjectBuilder[T]): String =
     builder.getClass().getName()
 
@@ -71,7 +74,6 @@ private[sporks] object SporkObjectBuilder {
 
 
 private[sporks] object SporkClassBuilder {
-
   def toString[T](builder: SporkClassBuilder[T]): String =
     builder.getClass().getName()
 
@@ -89,7 +91,6 @@ private[sporks] object SporkClassBuilder {
 
 
 private[sporks] object SporkLambdaBuilder {
-
   def toString[T](builder: SporkLambdaBuilder[T]): String =
     builder.getClass().getName()
 

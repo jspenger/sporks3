@@ -69,7 +69,7 @@ import upickle.default.* // imports: read, write, etc.
 
 // ...
 val filter    = Filter.pack().packWithEnv(predicate)
-val pickled   = write(filter) // "PackedWithEnv(PackedObject(sporks.Filter$),{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.Predicate$"},PackedClass(sporks.ReadWriters$PACKED_OBJECT_RW_T))"
+val pickled   = write(filter) // "PackedWithEnv(PackedObject(sporks.Filter$),{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.Predicate$"},PackedClass(sporks.ReadWriters$PackedObjectRW_T))"
 val unpickled = read[PackedSpork[Int => Boolean]](pickled)
 val fun       = unpickled.unwrap()
 fun(11) // true

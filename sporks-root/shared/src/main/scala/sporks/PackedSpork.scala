@@ -12,8 +12,36 @@ sealed trait PackedSpork[+T] {
     PackedWithEnv(this, PackedEnv(write(env)(using prw.unwrap()), prw))
   }
 
+  /** Optimization for applying this `PackedSpork[T1 => R]` directly to the
+    * contents of a `PackedSpork[T1]`.
+    *
+    * This avoids the need to pack and unwrap the PackedSpork, which is what
+    * otherwise is necessary for achieving the same result by using `withEnv`.
+    *
+    * Using this method has performance benefits as it avoids unnecessary
+    * packing and unwrapping, as well as by reducing the size of the contained
+    * serialized data.
+    */
+  def packWithEnv2[T1, R](env: PackedSpork[T1])(using @implicitNotFound(CanPackWithEnv.MSG) ev: CanPackWithEnv[T, T1, R]): PackedWithEnv[T1, R] = {
+    PackedWithEnv(this, env)
+  }
+
   def packWithCtx[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using @implicitNotFound(CanPackWithCtx.MSG) ev: CanPackWithCtx[T, T1, R]): PackedWithCtx[T1, R] = {
     PackedWithCtx(this, PackedEnv(write(env)(using prw.unwrap()), prw))
+  }
+
+  /** Optimization for applying this `PackedSpork[T1 ?=> R]` directly to the
+    * contents of a `PackedSpork[T1]`.
+    *
+    * This avoids the need to pack and unwrap the PackedSpork, which is what
+    * otherwise is necessary for achieving the same result by using `withEnv`.
+    *
+    * Using this method has performance benefits as it avoids unnecessary
+    * packing and unwrapping, as well as by reducing the size of the contained
+    * serialized data.
+    */
+  def packWithCtx2[T1, R](env: PackedSpork[T1])(using @implicitNotFound(CanPackWithCtx.MSG) ev: CanPackWithCtx[T, T1, R]): PackedWithCtx[T1, R] = {
+    PackedWithCtx(this, env)
   }
 
   def unwrap(): T = {

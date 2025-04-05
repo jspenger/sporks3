@@ -137,7 +137,7 @@ class SporkObjectBuilderTests:
 
   @Test
   def testPackedSporkReadWriterWithEnv(): Unit =
-    val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$HigherLevelFilter$"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"{\"$type\":\"sporks.PackedSpork.PackedObject\",\"fun\":\"sporks.SporkObjectBuilderTests$Predicate$\"}","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$PACKED_OBJECT_RW$"}}}"""
+    val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$HigherLevelFilter$"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"{\"$type\":\"sporks.PackedSpork.PackedObject\",\"fun\":\"sporks.SporkObjectBuilderTests$Predicate$\"}","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$PackedObjectRW$"}}}"""
 
     val predicate = Predicate.pack()
     val filter = HigherLevelFilter.pack().packWithEnv(predicate)
