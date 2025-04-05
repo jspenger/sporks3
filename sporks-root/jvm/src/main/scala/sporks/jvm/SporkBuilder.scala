@@ -47,12 +47,9 @@ object SporkBuilder {
     // Warning:
     // It is critical to keep the value assignment in the following code block.
     // If it is removed, the resulting lambda will start capturing outer classes
-    // when directly nested inside of methods. Moreover, this is not (easily)
-    // detectable by macros, as it happens in later compilation stages. For
-    // example, the macro may say that the lambda has an empty parameter list,
-    // but after later compilation stages, the lambda will take the outer class
-    // as a parameter, thus failing the `pack()` method which assumes that it
-    // has no parameters. The current solution seems to be working.
+    // when directly nested inside of methods. Moreover, this is not detectable
+    // by macros, as it happens in later compilation stages. The current
+    // solution seems to be working.
     Macros.checkBodyExpr(bodyExpr)
     '{
       val lambda = {

@@ -12,8 +12,16 @@ sealed trait Spork[+T] {
     SporkWithEnv(this, SporkEnv(env, rw))
   }
 
+  def withEnv2[T1, R](env: Spork[T1])(using @implicitNotFound(CanWithEnv.MSG) ev: CanWithEnv[T, T1, R]): SporkWithEnv[T1, R] = {
+    SporkWithEnv(this, env)
+  }
+
   def withCtx[T1, R](env: T1)(using rw: Spork[ReadWriter[T1]])(using @implicitNotFound(CanWithCtx.MSG) ev: CanWithCtx[T, T1, R]): SporkWithCtx[T1, R] = {
     SporkWithCtx(this, SporkEnv(env, rw))
+  }
+
+  def withCtx2[T1, R](env: Spork[T1])(using @implicitNotFound(CanWithCtx.MSG) ev: CanWithCtx[T, T1, R]): SporkWithCtx[T1, R] = {
+    SporkWithCtx(this, env)
   }
 
   def unwrap(): T = {

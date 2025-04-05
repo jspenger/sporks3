@@ -109,7 +109,7 @@ class SporkClassBuilderTests:
 
   @Test
   def testPackedSporkClassBuilderWithEnv(): Unit =
-    val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedClass","fun":"sporks.SporkClassBuilderTests$FilterWithTypeParam"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"{\"$type\":\"sporks.PackedSpork.PackedClass\",\"fun\":\"sporks.SporkClassBuilderTests$Predicate\"}","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$PACKED_CLASS_RW$"}}}"""
+    val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedClass","fun":"sporks.SporkClassBuilderTests$FilterWithTypeParam"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"{\"$type\":\"sporks.PackedSpork.PackedClass\",\"fun\":\"sporks.SporkClassBuilderTests$Predicate\"}","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$PackedClassRW$"}}}"""
 
     val predicate = new Predicate().pack()
     val filter = new FilterWithTypeParam[Int].pack().packWithEnv(predicate)
