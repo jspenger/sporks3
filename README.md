@@ -28,8 +28,14 @@ PackedSpork[T] -- unwrap() --> T
 
 Additionally, a PackedSpork can be partially applied to a serializable `env`ironment variable, using either the `withEnv` or the `withCtx` methods.
 ```scala
-PackedSpork[E  => T] -- withEnv(env: E) --> PackedSpork[T]
-PackedSpork[E ?=> T] -- withCtx(env: E) --> PackedSpork[T]
+PackedSpork[E  => T] -- withEnv(env: E)(using PackedSpork[ReadWriter[E]]) --> PackedSpork[T]
+PackedSpork[E ?=> T] -- withCtx(env: E)(using PackedSpork[ReadWriter[E]]) --> PackedSpork[T]
+```
+
+It can also be partially applied directly to a PackedSpork using the `withEnv2` or `withCtx2` methods.
+```scala
+PackedSpork[E  => T] -- withEnv2(env: PackedSpork[E]) --> PackedSpork[T]
+PackedSpork[E ?=> T] -- withCtx2(env: PackedSpork[E]) --> PackedSpork[T]
 ```
 
 ## Example
