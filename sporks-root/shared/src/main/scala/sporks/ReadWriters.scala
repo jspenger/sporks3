@@ -88,28 +88,28 @@ object ReadWriters {
   //////////////////////////////////////////////////////////////////////////////
 
   private[sporks] class SomeRW[T] extends SporkClassBuilder[ReadWriter[T] ?=> ReadWriter[Some[T]]]({ summon })
-  given someRW[T](using tRW: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[Some[T]]] = new SomeRW[T].pack().packWithCtx2(tRW)
+  given someRW[T](using tRW: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[Some[T]]] = new SomeRW[T].pack().withCtx2(tRW)
 
   private[sporks] object NoneRW extends SporkObjectBuilder[ReadWriter[None.type]](summon[ReadWriter[None.type]])
   given noneRW: PackedSpork[ReadWriter[None.type]] = NoneRW.pack()
 
   private[sporks] class OptionRW[T] extends SporkClassBuilder[ReadWriter[T] ?=> ReadWriter[Option[T]]]({ summon })
-  given optionRW[T](using tRW: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[Option[T]]] = new OptionRW[T].pack().packWithCtx2(tRW)
+  given optionRW[T](using tRW: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[Option[T]]] = new OptionRW[T].pack().withCtx2(tRW)
 
   private[sporks] class ListRW[T] extends SporkClassBuilder[ReadWriter[T] ?=> ReadWriter[List[T]]]({ summon })
-  given listRW[T](using tRW: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[List[T]]] = new ListRW[T].pack().packWithCtx2(tRW)
+  given listRW[T](using tRW: PackedSpork[ReadWriter[T]]): PackedSpork[ReadWriter[List[T]]] = new ListRW[T].pack().withCtx2(tRW)
 
   private[sporks] object Tuple0RW extends SporkObjectBuilder[ReadWriter[EmptyTuple]](macroRW[EmptyTuple])
   given tuple0RW: PackedSpork[ReadWriter[EmptyTuple]] = Tuple0RW.pack()
 
   private[sporks] class Tuple1RW[T1] extends SporkClassBuilder[ReadWriter[T1] ?=> ReadWriter[Tuple1[T1]]]({ summon })
-  given tuple1RW[T1](using t1RW: PackedSpork[ReadWriter[T1]]): PackedSpork[ReadWriter[Tuple1[T1]]] = new Tuple1RW[T1].pack().packWithCtx2(t1RW)
+  given tuple1RW[T1](using t1RW: PackedSpork[ReadWriter[T1]]): PackedSpork[ReadWriter[Tuple1[T1]]] = new Tuple1RW[T1].pack().withCtx2(t1RW)
 
   private[sporks] class Tuple2RW[T1, T2] extends SporkClassBuilder[ReadWriter[T1] ?=> ReadWriter[T2] ?=> ReadWriter[Tuple2[T1, T2]]]({ summon })
-  given tuple2RW[T1, T2](using t1RW: PackedSpork[ReadWriter[T1]], t2RW: PackedSpork[ReadWriter[T2]]): PackedSpork[ReadWriter[Tuple2[T1, T2]]] = (new Tuple2RW[T1, T2]).pack().packWithCtx2(t1RW).packWithCtx2(t2RW)
+  given tuple2RW[T1, T2](using t1RW: PackedSpork[ReadWriter[T1]], t2RW: PackedSpork[ReadWriter[T2]]): PackedSpork[ReadWriter[Tuple2[T1, T2]]] = (new Tuple2RW[T1, T2]).pack().withCtx2(t1RW).withCtx2(t2RW)
 
   private[sporks] class Tuple3RW[T1, T2, T3] extends SporkClassBuilder[ReadWriter[T1] ?=> ReadWriter[T2] ?=> ReadWriter[T3] ?=> ReadWriter[Tuple3[T1, T2, T3]]]({ summon })
-  given tuple3RW[T1, T2, T3](using t1RW: PackedSpork[ReadWriter[T1]], t2RW: PackedSpork[ReadWriter[T2]], t3RW: PackedSpork[ReadWriter[T3]]): PackedSpork[ReadWriter[Tuple3[T1, T2, T3]]] = (new Tuple3RW[T1, T2, T3]).pack().packWithCtx2(t1RW).packWithCtx2(t2RW).packWithCtx2(t3RW)
+  given tuple3RW[T1, T2, T3](using t1RW: PackedSpork[ReadWriter[T1]], t2RW: PackedSpork[ReadWriter[T2]], t3RW: PackedSpork[ReadWriter[T3]]): PackedSpork[ReadWriter[Tuple3[T1, T2, T3]]] = (new Tuple3RW[T1, T2, T3]).pack().withCtx2(t1RW).withCtx2(t2RW).withCtx2(t3RW)
 
   //////////////////////////////////////////////////////////////////////////////
   // ReadWriter[Spork[T]]

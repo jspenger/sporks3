@@ -36,11 +36,11 @@ object LambdaExample {
     )
 
     println(
-      Lambda1.packWithEnv(100).unwrap()
+      Lambda1.withEnv(100).unwrap()
     )
 
     println(
-      Lambda2.packWithEnv(10).unwrap()
+      Lambda2.withEnv(10).unwrap()
     )
 
     println(
@@ -66,7 +66,7 @@ object LambdaExample {
       readFromFile[PackedSpork[Option[Int] => Int]]("Lambda3.json")
     )
 
-    writeToFile(Lambda3.packWithEnv(Some(42)), "Lambda3WithEnv.json")
+    writeToFile(Lambda3.withEnv(Some(42)), "Lambda3WithEnv.json")
     println(
       readFromFile[PackedSpork[Int]]("Lambda3WithEnv.json")
     )

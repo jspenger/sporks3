@@ -60,7 +60,7 @@ class SporkLambdaTests:
   @Test
   def testPackBuildHigherOrderLambda(): Unit =
     val higherLevelFilter = SporkBuilder.apply[PackedSpork[Int => Boolean] => Int => Option[Int]] { env => x => if env.unwrap().apply(x) then Some(x) else None }
-    val filter = higherLevelFilter.packWithEnv(lambda).unwrap()
+    val filter = higherLevelFilter.withEnv(lambda).unwrap()
     assertEquals(Some(11), filter(11))
     assertEquals(None, filter(9))
 
@@ -91,8 +91,8 @@ class SporkLambdaTests:
     val json9 = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"9","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$IntRW$"}}}"""
     val json11 = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedLambda","fun":"sporks.jvm.SporkLambdaTests$Lambda$11"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"11","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$IntRW$"}}}"""
 
-    val packed9 = upickle.default.write(lambda.packWithEnv(9))
-    val packed11 = upickle.default.write(lambda.packWithEnv(11))
+    val packed9 = upickle.default.write(lambda.withEnv(9))
+    val packed11 = upickle.default.write(lambda.withEnv(11))
     assertEquals(json9, packed9)
     assertEquals(json11, packed11)
 
