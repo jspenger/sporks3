@@ -44,6 +44,22 @@ sealed trait PackedSpork[+T] {
     PackedWithCtx(this, env)
   }
 
+  def map[U](fun: T => U)(using rw: PackedSpork[ReadWriter[U]]): PackedSpork[U] = {
+    PackedEnv(write(fun.apply(this.unwrap()))(using rw.unwrap()), rw)
+  }
+
+  def map2[U](fun: PackedSpork[T => U]): PackedSpork[U] = {
+    fun.packWithEnv2(this)
+  }
+
+  def flatMap[U](fun: T => PackedSpork[U])(using rw: PackedSpork[ReadWriter[U]]): PackedSpork[U] = {
+    PackedEnv(write(fun.apply(this.unwrap()).unwrap())(using rw.unwrap()), rw)
+  }
+
+  def flatMap2[U](fun: PackedSpork[T => PackedSpork[U]]): PackedSpork[U] = {
+    fun.packWithEnv2(this).unwrap()
+  }
+
   def unwrap(): T = {
     this match
       case PackedObject(fun) => SporkObjectBuilder.fromString[T](fun).fun

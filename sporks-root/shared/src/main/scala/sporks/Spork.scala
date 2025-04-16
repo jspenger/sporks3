@@ -24,6 +24,22 @@ sealed trait Spork[+T] {
     SporkWithCtx(this, env)
   }
 
+  def map[U](fun: T => U)(using rw: Spork[ReadWriter[U]]): Spork[U] = {
+    SporkEnv(fun.apply(this.unwrap()), rw)
+  }
+
+  def map2[U](fun: Spork[T => U]): Spork[U] = {
+    fun.withEnv2(this)
+  }
+
+  def flatMap[U](fun: T => Spork[U])(using rw: Spork[ReadWriter[U]]): Spork[U] = {
+    SporkEnv(fun.apply(this.unwrap()).unwrap(), rw)
+  }
+
+  def flatMap2[U](fun: Spork[T => Spork[U]]): Spork[U] = {
+    fun.withEnv2(this).unwrap()
+  }
+
   def unwrap(): T = {
     this match
       case SporkObject(builder) => builder.fun
