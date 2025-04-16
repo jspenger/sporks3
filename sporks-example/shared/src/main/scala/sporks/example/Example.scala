@@ -29,14 +29,14 @@ object Example {
       Spork1.pack().unwrap()(10)
     )
 
-    // `packWithEnv` to pack an environment into the `PackedSpork`.
+    // `withEnv` to pack an environment into the `PackedSpork`.
     println(
-      Spork2.pack().packWithEnv(11).unwrap()(10)
+      Spork2.pack().withEnv(11).unwrap()(10)
     )
 
     // The resulting `PackedSpork` is a simple data structure.
     println(
-      Spork2.pack().packWithEnv(11)
+      Spork2.pack().withEnv(11)
     )
 
     // `build` to get a `Spork` which is not serialized unlike the
@@ -52,25 +52,25 @@ object Example {
 
     // Higher order sporks can pack other sporks in their environment.
     println(
-      HigherLevelFilter.pack().packWithEnv(Predicate.pack()).unwrap()(11)
+      HigherLevelFilter.pack().withEnv(Predicate.pack()).unwrap()(11)
     )
 
     // Besides primitive types, standard library types like `Option` can also be
     // packed in the environment.
     println(
-      SporkOption.pack().packWithEnv(Some(10)).unwrap()(13)
+      SporkOption.pack().withEnv(Some(10)).unwrap()(13)
     )
 
     // The environment paramter can also be a context parameter. A context
-    // parameter can be packed using the `packWithCtx` method.
+    // parameter can be packed using the `withCtx` method.
     println(
-      SporkWithCtx.pack().packWithCtx(99).unwrap()
+      SporkWithCtx.pack().withCtx(99).unwrap()
     )
 
     // The `SporkClassBuilder` can be used to create sporks with type
     // parameters.
     println({
-      val constant10 = new Constant[Int]().pack().packWithEnv(10)
+      val constant10 = new Constant[Int]().pack().withEnv(10)
       constant10.unwrap()
     })
 
@@ -90,12 +90,12 @@ object Example {
       readFromFile[PackedSpork[Int => String]]("Spork1.json")
     )
 
-    writeToFile(Spork2.pack().packWithEnv(10), "Spork2.json")
+    writeToFile(Spork2.pack().withEnv(10), "Spork2.json")
     println(
       readFromFile[PackedSpork[Int => String]]("Spork2.json")
     )
 
-    writeToFile(HigherLevelFilter.pack().packWithEnv(Predicate.pack()), "Filter.json")
+    writeToFile(HigherLevelFilter.pack().withEnv(Predicate.pack()), "Filter.json")
     println(
       readFromFile[PackedSpork[Int => Boolean]]("Filter.json")
     )

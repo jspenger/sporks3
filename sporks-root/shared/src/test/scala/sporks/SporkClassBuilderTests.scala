@@ -39,7 +39,7 @@ class SporkClassBuilderTests:
 
   @Test
   def testSporkClassBuilderWithEnv(): Unit =
-    val packed = new Thunk[Int].pack().packWithEnv(10)
+    val packed = new Thunk[Int].pack().withEnv(10)
     val thunk = packed.unwrap()
     assertEquals(10, thunk())
 
@@ -112,7 +112,7 @@ class SporkClassBuilderTests:
     val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedClass","fun":"sporks.SporkClassBuilderTests$FilterWithTypeParam"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"{\"$type\":\"sporks.PackedSpork.PackedClass\",\"fun\":\"sporks.SporkClassBuilderTests$Predicate\"}","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$PackedClassRW$"}}}"""
 
     val predicate = new Predicate().pack()
-    val filter = new FilterWithTypeParam[Int].pack().packWithEnv(predicate)
+    val filter = new FilterWithTypeParam[Int].pack().withEnv(predicate)
     val packed = upickle.default.write(filter)
     assertEquals(json, packed)
 

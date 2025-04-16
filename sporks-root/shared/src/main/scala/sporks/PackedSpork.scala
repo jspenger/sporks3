@@ -8,7 +8,7 @@ sealed trait PackedSpork[+T] {
   import sporks.Spork.*
   import sporks.PackedSpork.*
 
-  def packWithEnv[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using @implicitNotFound(CanPackWithEnv.MSG) ev: CanPackWithEnv[T, T1, R]): PackedWithEnv[T1, R] = {
+  def withEnv[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using @implicitNotFound(CanWithEnv.MSG) ev: CanWithEnv[T, T1, R]): PackedWithEnv[T1, R] = {
     PackedWithEnv(this, PackedEnv(write(env)(using prw.unwrap()), prw))
   }
 
@@ -22,11 +22,11 @@ sealed trait PackedSpork[+T] {
     * packing and unwrapping, as well as by reducing the size of the contained
     * serialized data.
     */
-  def packWithEnv2[T1, R](env: PackedSpork[T1])(using @implicitNotFound(CanPackWithEnv.MSG) ev: CanPackWithEnv[T, T1, R]): PackedWithEnv[T1, R] = {
+  def withEnv2[T1, R](env: PackedSpork[T1])(using @implicitNotFound(CanWithEnv.MSG) ev: CanWithEnv[T, T1, R]): PackedWithEnv[T1, R] = {
     PackedWithEnv(this, env)
   }
 
-  def packWithCtx[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using @implicitNotFound(CanPackWithCtx.MSG) ev: CanPackWithCtx[T, T1, R]): PackedWithCtx[T1, R] = {
+  def withCtx[T1, R](env: T1)(using prw: PackedSpork[ReadWriter[T1]])(using @implicitNotFound(CanWithCtx.MSG) ev: CanWithCtx[T, T1, R]): PackedWithCtx[T1, R] = {
     PackedWithCtx(this, PackedEnv(write(env)(using prw.unwrap()), prw))
   }
 
@@ -40,7 +40,7 @@ sealed trait PackedSpork[+T] {
     * packing and unwrapping, as well as by reducing the size of the contained
     * serialized data.
     */
-  def packWithCtx2[T1, R](env: PackedSpork[T1])(using @implicitNotFound(CanPackWithCtx.MSG) ev: CanPackWithCtx[T, T1, R]): PackedWithCtx[T1, R] = {
+  def withCtx2[T1, R](env: PackedSpork[T1])(using @implicitNotFound(CanWithCtx.MSG) ev: CanWithCtx[T, T1, R]): PackedWithCtx[T1, R] = {
     PackedWithCtx(this, env)
   }
 
@@ -49,7 +49,7 @@ sealed trait PackedSpork[+T] {
   }
 
   def map2[U](fun: PackedSpork[T => U]): PackedSpork[U] = {
-    fun.packWithEnv2(this)
+    fun.withEnv2(this)
   }
 
   def flatMap[U](fun: T => PackedSpork[U])(using rw: PackedSpork[ReadWriter[U]]): PackedSpork[U] = {
@@ -57,7 +57,7 @@ sealed trait PackedSpork[+T] {
   }
 
   def flatMap2[U](fun: PackedSpork[T => PackedSpork[U]]): PackedSpork[U] = {
-    fun.packWithEnv2(this).unwrap()
+    fun.withEnv2(this).unwrap()
   }
 
   def unwrap(): T = {
@@ -93,9 +93,9 @@ object PackedSpork {
   final case class PackedWithEnv[E, +T](packed: PackedSpork[E => T],  packedEnv: PackedSpork[E]) extends PackedSpork[T]
   final case class PackedWithCtx[E, +T](packed: PackedSpork[E ?=> T], packedEnv: PackedSpork[E]) extends PackedSpork[T]
 
-  private type CanPackWithEnv[T, T1, R] = PackedSpork[T] <:< PackedSpork[T1 => R]
-  private object CanPackWithEnv { inline val MSG = "Cannot pack contained type ${T} with environment type ${T1}. It is not a function type of ${T1} => ${R}." }
+  private type CanWithEnv[T, T1, R] = PackedSpork[T] <:< PackedSpork[T1 => R]
+  private object CanWithEnv { inline val MSG = "Cannot pack contained type ${T} with environment type ${T1}. It is not a function type of ${T1} => ${R}." }
 
-  private type CanPackWithCtx[T, T1, R] = PackedSpork[T] <:< PackedSpork[T1 ?=> R]
-  private object CanPackWithCtx { inline val MSG = "Cannot pack contained type ${T} with context type ${T1}. It is not a function type of ${T1} ?=> ${R}." }
+  private type CanWithCtx[T, T1, R] = PackedSpork[T] <:< PackedSpork[T1 ?=> R]
+  private object CanWithCtx { inline val MSG = "Cannot pack contained type ${T} with context type ${T1}. It is not a function type of ${T1} ?=> ${R}." }
 }

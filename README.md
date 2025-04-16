@@ -26,10 +26,10 @@ A PackedSpork can be used to `unwrap` the closure.
 PackedSpork[T] -- unwrap() --> T
 ```
 
-Additionally, a PackedSpork can be partially applied to a serializable `env`ironment variable, using either the `packWithEnv` or the `packWithCtx` methods.
+Additionally, a PackedSpork can be partially applied to a serializable `env`ironment variable, using either the `withEnv` or the `withCtx` methods.
 ```scala
-PackedSpork[E  => T] -- packWithEnv(env: E) --> PackedSpork[T]
-PackedSpork[E ?=> T] -- packWithCtx(env: E) --> PackedSpork[T]
+PackedSpork[E  => T] -- withEnv(env: E) --> PackedSpork[T]
+PackedSpork[E ?=> T] -- withCtx(env: E) --> PackedSpork[T]
 ```
 
 ## Example
@@ -57,7 +57,7 @@ object Filter
     })
 
 val predicate = Predicate.pack()
-val filter    = Filter.pack().packWithEnv(predicate)
+val filter    = Filter.pack().withEnv(predicate)
 val fun       = filter.unwrap()
 fun(11) // true
 fun(9) // false
@@ -68,7 +68,7 @@ PackedSporks can be serialized/pickled and deserialized/unpickled by using the u
 import upickle.default.* // imports: read, write, etc.
 
 // ...
-val filter    = Filter.pack().packWithEnv(predicate)
+val filter    = Filter.pack().withEnv(predicate)
 val pickled   = write(filter) // "PackedWithEnv(PackedObject(sporks.Filter$),{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.Predicate$"},PackedClass(sporks.ReadWriters$PackedObjectRW_T))"
 val unpickled = read[PackedSpork[Int => Boolean]](pickled)
 val fun       = unpickled.unwrap()
@@ -86,7 +86,7 @@ val filter =
   ]({ env => x =>
     env.unwrap().apply(x)
   })
-val fun = filter.packWithEnv(predicate).unwrap()
+val fun = filter.withEnv(predicate).unwrap()
 fun(11) // true
 fun(9) // false
 ```
@@ -95,7 +95,7 @@ The SporkClassBuilder builder is the most flexible way to create sporks.
 However, it is not recommended to use it unless you have a good reason to do so.
 ```scala
 class Constant[T] extends SporkClassBuilder[T => T]({ env => env })
-val constant = new Constant[Int]().pack().packWithEnv(42)
+val constant = new Constant[Int]().pack().withEnv(42)
 constant.unwrap() // 42
 ```
 

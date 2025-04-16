@@ -63,10 +63,10 @@ object SporkBuilder {
     '{ ${ applyMacro(bodyExpr) }.pack() }
 
   private def packMacroWithEnv[E, T](envExpr: Expr[E], bodyExpr: Expr[E => T], rwExpr: Expr[PackedSpork[ReadWriter[E]]])(using Type[E], Type[T], Quotes): Expr[PackedWithEnv[E, T]] =
-    '{ ${ applyMacro(bodyExpr) }.pack().packWithEnv($envExpr)(using $rwExpr) }
+    '{ ${ applyMacro(bodyExpr) }.pack().withEnv($envExpr)(using $rwExpr) }
 
   private def packMacroWithCtx[E, T](envExpr: Expr[E], bodyExpr: Expr[E ?=> T], rwExpr: Expr[PackedSpork[ReadWriter[E]]])(using Type[E], Type[T], Quotes): Expr[PackedWithCtx[E, T]] =
-    '{ ${ applyMacro(bodyExpr) }.pack().packWithCtx($envExpr)(using $rwExpr) }
+    '{ ${ applyMacro(bodyExpr) }.pack().withCtx($envExpr)(using $rwExpr) }
 
   private def buildMacro[T](bodyExpr: Expr[T])(using Type[T], Quotes): Expr[SporkLambda[T]] =
     '{ ${ applyMacro(bodyExpr) }.build() }

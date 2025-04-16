@@ -64,9 +64,9 @@ class SporkObjectBuilderTests:
     assertEquals(10, thunk2())
 
   @Test
-  def testPackWithEnv(): Unit =
-    val packed9 = Predicate.pack().packWithEnv(9)
-    val packed11 = Predicate.pack().packWithEnv(11)
+  def testWithEnv(): Unit =
+    val packed9 = Predicate.pack().withEnv(9)
+    val packed11 = Predicate.pack().withEnv(11)
     assertFalse(packed9.unwrap())
     assertTrue(packed11.unwrap())
 
@@ -76,9 +76,9 @@ class SporkObjectBuilderTests:
     assertTrue(built11.unwrap())
 
   @Test
-  def testPackWithCtx(): Unit =
-    val packed9 = PredicateCtx.pack().packWithCtx(9)
-    val packed11 = PredicateCtx.pack().packWithCtx(11)
+  def testWithCtx(): Unit =
+    val packed9 = PredicateCtx.pack().withCtx(9)
+    val packed11 = PredicateCtx.pack().withCtx(11)
     assertFalse(packed9.unwrap())
     assertTrue(packed11.unwrap())
 
@@ -90,7 +90,7 @@ class SporkObjectBuilderTests:
   @Test
   def testPackBuildHigherOrderSporkObjectBuilder(): Unit =
     val predicate = Predicate.pack()
-    val filter = HigherLevelFilter.pack().packWithEnv(predicate).unwrap()
+    val filter = HigherLevelFilter.pack().withEnv(predicate).unwrap()
     assertEquals(Some(11), filter(11))
     assertEquals(None, filter(9))
 
@@ -140,7 +140,7 @@ class SporkObjectBuilderTests:
     val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$HigherLevelFilter$"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"{\"$type\":\"sporks.PackedSpork.PackedObject\",\"fun\":\"sporks.SporkObjectBuilderTests$Predicate$\"}","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$PackedObjectRW$"}}}"""
 
     val predicate = Predicate.pack()
-    val filter = HigherLevelFilter.pack().packWithEnv(predicate)
+    val filter = HigherLevelFilter.pack().withEnv(predicate)
     val packed = upickle.default.write(filter)
     assertEquals(json, packed)
 
@@ -157,20 +157,20 @@ class SporkObjectBuilderTests:
 
   @Test
   def testOptionEnvironment(): Unit =
-    val packed = OptionMapper.pack().packWithEnv(Some(11))
+    val packed = OptionMapper.pack().withEnv(Some(11))
     val fun = packed.unwrap()
     assertEquals(11, fun)
 
-    val packed2 = OptionMapper.pack().packWithEnv(Some(11))
+    val packed2 = OptionMapper.pack().withEnv(Some(11))
     val fun2 = packed2.unwrap()
     assertEquals(11, fun2)
 
   @Test
   def testListEnvironment(): Unit =
-    val packed = ListReducer.pack().packWithEnv(List(1, 2, 3))
+    val packed = ListReducer.pack().withEnv(List(1, 2, 3))
     val fun = packed.unwrap()
     assertEquals(6, fun)
 
-    val packed2 = ListReducer.pack().packWithEnv(List(1, 2, 3))
+    val packed2 = ListReducer.pack().withEnv(List(1, 2, 3))
     val fun2 = packed2.unwrap()
     assertEquals(6, fun2)

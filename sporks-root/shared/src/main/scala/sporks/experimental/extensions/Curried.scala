@@ -24,14 +24,14 @@ object Curried {
   private[sporks] class Uncurried2[T1, T2, R] extends SporkClassBuilder[Function1[T1, Function1[T2, R]] => Function2[T1, T2, R]]({ fun1 => uncurried2(fun1) })
   private[sporks] class Uncurried3[T1, T2, T3, R] extends SporkClassBuilder[Function1[T1, Function1[T2, Function1[T3, R]]] => Function3[T1, T2, T3, R]]({ fun1 => uncurried3(fun1) })
 
-  extension [R](packed1: PackedSpork[Function0[R]]) { def curried0(): PackedSpork[Function0[R]] = (new Curried0[R]()).pack().packWithEnv2(packed1) }
-  extension [T1, R](packed1: PackedSpork[Function1[T1, R]]) { def curried1(): PackedSpork[Function1[T1, R]] = (new Curried1[T1, R]()).pack().packWithEnv2(packed1) }
-  extension [T1, T2, R](packed1: PackedSpork[Function2[T1, T2, R]]) { def curried2(): PackedSpork[Function1[T1, Function1[T2, R]]] = (new Curried2[T1, T2, R]()).pack().packWithEnv2(packed1) }
-  extension [T1, T2, T3, R](packed1: PackedSpork[Function3[T1, T2, T3, R]]) { def curried3(): PackedSpork[Function1[T1, Function1[T2, Function1[T3, R]]]] = (new Curried3[T1, T2, T3, R]()).pack().packWithEnv2(packed1) }
-  extension [R](packed1: PackedSpork[Function0[R]]) { def uncurried0(): PackedSpork[Function0[R]] = (new Uncurried0[R]()).pack().packWithEnv2(packed1) }
-  extension [T1, R](packed1: PackedSpork[Function1[T1, R]]) { def uncurried1(): PackedSpork[Function1[T1, R]] = (new Uncurried1[T1, R]()).pack().packWithEnv2(packed1) }
-  extension [T1, T2, R](packed1: PackedSpork[Function1[T1, Function1[T2, R]]]) { def uncurried2(): PackedSpork[Function2[T1, T2, R]] = (new Uncurried2[T1, T2, R]()).pack().packWithEnv2(packed1) }
-  extension [T1, T2, T3, R](packed1: PackedSpork[Function1[T1, Function1[T2, Function1[T3, R]]]]) { def uncurried3(): PackedSpork[Function3[T1, T2, T3, R]] = (new Uncurried3[T1, T2, T3, R]()).pack().packWithEnv2(packed1) }
+  extension [R](packed1: PackedSpork[Function0[R]]) { def curried0(): PackedSpork[Function0[R]] = (new Curried0[R]()).pack().withEnv2(packed1) }
+  extension [T1, R](packed1: PackedSpork[Function1[T1, R]]) { def curried1(): PackedSpork[Function1[T1, R]] = (new Curried1[T1, R]()).pack().withEnv2(packed1) }
+  extension [T1, T2, R](packed1: PackedSpork[Function2[T1, T2, R]]) { def curried2(): PackedSpork[Function1[T1, Function1[T2, R]]] = (new Curried2[T1, T2, R]()).pack().withEnv2(packed1) }
+  extension [T1, T2, T3, R](packed1: PackedSpork[Function3[T1, T2, T3, R]]) { def curried3(): PackedSpork[Function1[T1, Function1[T2, Function1[T3, R]]]] = (new Curried3[T1, T2, T3, R]()).pack().withEnv2(packed1) }
+  extension [R](packed1: PackedSpork[Function0[R]]) { def uncurried0(): PackedSpork[Function0[R]] = (new Uncurried0[R]()).pack().withEnv2(packed1) }
+  extension [T1, R](packed1: PackedSpork[Function1[T1, R]]) { def uncurried1(): PackedSpork[Function1[T1, R]] = (new Uncurried1[T1, R]()).pack().withEnv2(packed1) }
+  extension [T1, T2, R](packed1: PackedSpork[Function1[T1, Function1[T2, R]]]) { def uncurried2(): PackedSpork[Function2[T1, T2, R]] = (new Uncurried2[T1, T2, R]()).pack().withEnv2(packed1) }
+  extension [T1, T2, T3, R](packed1: PackedSpork[Function1[T1, Function1[T2, Function1[T3, R]]]]) { def uncurried3(): PackedSpork[Function3[T1, T2, T3, R]] = (new Uncurried3[T1, T2, T3, R]()).pack().withEnv2(packed1) }
 
   extension [R](spork1: Spork[Function0[R]]) { def curried0(): Spork[Function0[R]] = spork1.pack().curried0().unpack() }
   extension [T1, R](spork1: Spork[Function1[T1, R]]) { def curried1(): Spork[Function1[T1, R]] = spork1.pack().curried1().unpack() }
