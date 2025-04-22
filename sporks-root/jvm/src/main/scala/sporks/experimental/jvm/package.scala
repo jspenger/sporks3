@@ -26,4 +26,8 @@ package object jvm {
   inline def spc[E, T](inline env: E)(inline fun: E ?=> T)(using rw: PackedSpork[ReadWriter[E]]): PackedSpork[T] = {
     SporkBuilder.apply[Unit => E ?=> T](_ => fun).withEnv(()).withCtx(env)
   }
+
+  inline def spx[T](inline fun: T): PackedSpork[T] = {
+    Lift.apply[Unit => T](_ => fun).withEnv(())
+  }
 }
