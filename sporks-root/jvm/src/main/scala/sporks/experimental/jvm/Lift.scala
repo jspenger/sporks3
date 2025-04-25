@@ -47,7 +47,7 @@ object Lift {
 
     // 3. Lift each captured symbol, one at a time
     def liftSymbol(owner: Symbol, sym: Symbol, body: Term): Term = {
-      val mtpe = MethodType(List(sym.name))(_ => List(sym.termRef.widen), _ => body.tpe)
+      val mtpe = MethodType(List(sym.name))(_ => List(sym.termRef), _ => body.tpe)
       Lambda(
         owner,
         mtpe,
@@ -150,51 +150,28 @@ object Lift {
         .sorted(Ordering.by(_.fullName))
     }
 
-    val tree = bodyExpr.asTerm
-    tree match {
-      case Inlined(
-            None,
-            List(),
-            TypeApply(
-              Select(
-                Block(
-                  List(),
-                  Block(
-                    List(defdef @ DefDef(anonfun, params, _, Some(anonfunBody))),
-                    Closure(_, _)
-                  )
-                ),
-                asInst
-              ),
-              _
-            )
-          ) =>
-        findCaptures(defdef.symbol, anonfunBody)
-
-      case Inlined(
-            None,
-            List(),
-            TypeApply(
-              Select(
-                Block(
-                  List(defdef @ DefDef(anonfun, params, _, Some(anonfunBody))),
-                  Closure(_, _)
-                ),
-                asInst
-              ),
-              _
-            )
-          ) =>
-        findCaptures(defdef.symbol, anonfunBody)
-
-      case Inlined(None, List(), Block(List(defdef @ DefDef(anonfun, params, _, Some(anonfunBody))), Closure(_, _))) =>
-        findCaptures(defdef.symbol, anonfunBody)
-
-      case Inlined(None, List(), Block(List(), Block(List(defdef @ DefDef(anonfun, params, _, Some(anonfunBody))), Closure(_, _)))) =>
-        findCaptures(defdef.symbol, anonfunBody)
-
-      case _ =>
-        findCaptures(tree.symbol, tree)
+    def findCapturesTree(tree: Term): List[Symbol] = {
+      // This is a copy-and-paste of the code in Macros.scala, replacing
+      // `checkCaptures` with `findCaptures`, and `checkCapturesTree` with
+      // `findCapturesTree`. If one is edited, make sure to edit the other,
+      // or, better, refactor this into a common function.
+      tree match {
+        case Inlined(_, _, TypeApply(Select(Block(_, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _)), _), _)) =>
+          findCaptures(defdef.symbol, anonfunBody)
+        case Inlined(_, _, TypeApply(Select(Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _), _), _)) =>
+          findCaptures(defdef.symbol, anonfunBody)
+        case Inlined(_, _, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _)) =>
+          findCaptures(defdef.symbol, anonfunBody)
+        case Inlined(_, _, Block(_, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _))) =>
+          findCaptures(defdef.symbol, anonfunBody)
+        case Inlined(_, _, nested@ Inlined(_, _, _)) =>
+          findCapturesTree(nested)
+        case _ =>
+          findCaptures(tree.symbol, tree)
+      }
     }
+
+    val tree = bodyExpr.asTerm
+    findCapturesTree(tree)
   }
 }

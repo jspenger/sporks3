@@ -44,19 +44,10 @@ object SporkBuilder {
   import scala.quoted.*
 
   private def applyMacro[T](bodyExpr: Expr[T])(using Type[T], Quotes): Expr[SporkLambdaBuilder[T]] =
-    // Warning:
-    // It is critical to keep the value assignment in the following code block.
-    // If it is removed, the resulting lambda will start capturing outer classes
-    // when directly nested inside of methods. Moreover, this is not detectable
-    // by macros, as it happens in later compilation stages. The current
-    // solution seems to be working.
     Macros.checkBodyExpr(bodyExpr)
     '{
-      val lambda = {
-        class Lambda extends SporkLambdaBuilder[T]($bodyExpr)
-        (new Lambda())
-      }
-      lambda
+      class Lambda extends SporkLambdaBuilder[T]($bodyExpr)
+      (new Lambda())
     }
 
   private def packMacro[T](bodyExpr: Expr[T])(using Type[T], Quotes): Expr[PackedLambda[T]] =

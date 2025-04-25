@@ -168,53 +168,27 @@ object Macros {
       }
     }
 
-    val tree = bodyExpr.asTerm
-    tree match {
-      case Inlined(
-            None,
-            List(),
-            TypeApply(
-              Select(
-                Block(
-                  List(),
-                  Block(
-                    List(defdef @ DefDef(anonfun, params, _, Some(anonfunBody))),
-                    Closure(_, _)
-                  )
-                ),
-                asInst
-              ),
-              _
-            )
-          ) =>
-        checkCaptures(defdef.symbol, anonfunBody)
-
-      case Inlined(
-            None,
-            List(),
-            TypeApply(
-              Select(
-                Block(
-                  List(defdef @ DefDef(anonfun, params, _, Some(anonfunBody))),
-                  Closure(_, _)
-                ),
-                asInst
-              ),
-              _
-            )
-          ) =>
-        checkCaptures(defdef.symbol, anonfunBody)
-
-      case Inlined(None, List(), Block(List(defdef @ DefDef(anonfun, params, _, Some(anonfunBody))), Closure(_, _))) =>
-        checkCaptures(defdef.symbol, anonfunBody)
-
-      case Inlined(None, List(), Block(List(), Block(List(defdef @ DefDef(anonfun, params, _, Some(anonfunBody))), Closure(_, _)))) =>
-        checkCaptures(defdef.symbol, anonfunBody)
-
-      case _ =>
-        // Also check for captures if the body is not a function literal
-        checkCaptures(tree.symbol, tree)
+    def checkCapturesTree(tree: Term): Unit = {
+      // TODO: Refactor this to method to avoid duplication and co-dependency
+      // with the above `findCapturesTree` method.
+      tree match {
+        case Inlined(_, _, TypeApply(Select(Block(_, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _)), _), _)) =>
+          checkCaptures(defdef.symbol, anonfunBody)
+        case Inlined(_, _, TypeApply(Select(Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _), _), _)) =>
+          checkCaptures(defdef.symbol, anonfunBody)
+        case Inlined(_, _, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _)) =>
+          checkCaptures(defdef.symbol, anonfunBody)
+        case Inlined(_, _, Block(_, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _))) =>
+          checkCaptures(defdef.symbol, anonfunBody)
+        case Inlined(_, _, nested@ Inlined(_, _, _)) =>
+          checkCapturesTree(nested)
+        case _ =>
+          checkCaptures(tree.symbol, tree)
+      }
     }
+
+    val tree = bodyExpr.asTerm
+    checkCapturesTree(tree)
   }
 
   private[sporks] def isTopLevelObject[T](builderExpr: Expr[T])(using Type[T], Quotes): Expr[Unit] = {
