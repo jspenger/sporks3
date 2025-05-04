@@ -55,32 +55,28 @@ object ReadWriters {
   given unitRW: PackedSpork[ReadWriter[Unit]] = UnitRW.pack()
 
   //////////////////////////////////////////////////////////////////////////////
-  // PackedSpork[ReadWriter[PackedSpork[_]]]
+  // PackedSpork[ReadWriter[PackedSpork[?]]]
   //////////////////////////////////////////////////////////////////////////////
 
-  // Note:`PackedSpork[ReadWriter[PackedSpork[T]]]`s are implemented as
-  // `SporkObjectBuilder`s instead of `SporkClassBuilder`es. This is for
-  // optimization reasons,
-
-  private[sporks] object PackedSporkRW extends SporkObjectBuilder[ReadWriter[PackedSpork[_]]](macroRW)
+  private[sporks] object PackedSporkRW extends SporkObjectBuilder[ReadWriter[PackedSpork[?]]](macroRW)
   given packedSporkRW[T]: PackedSpork[ReadWriter[PackedSpork[T]]] = PackedSporkRW.pack().asInstanceOf[PackedSpork[ReadWriter[PackedSpork[T]]]]
 
-  private[sporks] object PackedObjectRW extends SporkObjectBuilder[ReadWriter[PackedObject[_]]](macroRW)
+  private[sporks] object PackedObjectRW extends SporkObjectBuilder[ReadWriter[PackedObject[?]]](macroRW)
   given packedObjectRW[T]: PackedSpork[ReadWriter[PackedObject[T]]] = PackedObjectRW.pack().asInstanceOf[PackedSpork[ReadWriter[PackedObject[T]]]]
 
-  private[sporks] object PackedClassRW extends SporkObjectBuilder[ReadWriter[PackedClass[_]]](macroRW)
+  private[sporks] object PackedClassRW extends SporkObjectBuilder[ReadWriter[PackedClass[?]]](macroRW)
   given packedClassRW[T]: PackedSpork[ReadWriter[PackedClass[T]]] = PackedClassRW.pack().asInstanceOf[PackedSpork[ReadWriter[PackedClass[T]]]]
 
-  private[sporks] object PackedLambdaRW extends SporkObjectBuilder[ReadWriter[PackedLambda[_]]](macroRW)
+  private[sporks] object PackedLambdaRW extends SporkObjectBuilder[ReadWriter[PackedLambda[?]]](macroRW)
   given packedLambdaRW[T]: PackedSpork[ReadWriter[PackedLambda[T]]] = PackedLambdaRW.pack().asInstanceOf[PackedSpork[ReadWriter[PackedLambda[T]]]]
 
-  private[sporks] object PackedEnvRW extends SporkObjectBuilder[ReadWriter[PackedEnv[_]]](macroRW)
+  private[sporks] object PackedEnvRW extends SporkObjectBuilder[ReadWriter[PackedEnv[?]]](macroRW)
   given packedEnvRW[E]: PackedSpork[ReadWriter[PackedEnv[E]]] = PackedEnvRW.pack().asInstanceOf[PackedSpork[ReadWriter[PackedEnv[E]]]]
 
-  private[sporks] object PackedWithEnvRW extends SporkObjectBuilder[ReadWriter[PackedWithEnv[_, _]]](macroRW)
+  private[sporks] object PackedWithEnvRW extends SporkObjectBuilder[ReadWriter[PackedWithEnv[?, ?]]](macroRW)
   given packedWithEnvRW[E, T]: PackedSpork[ReadWriter[PackedWithEnv[E, T]]] = PackedWithEnvRW.pack().asInstanceOf[PackedSpork[ReadWriter[PackedWithEnv[E, T]]]]
 
-  private[sporks] object PackedWithCtxRW extends SporkObjectBuilder[ReadWriter[PackedWithCtx[_, _]]](macroRW)
+  private[sporks] object PackedWithCtxRW extends SporkObjectBuilder[ReadWriter[PackedWithCtx[?, ?]]](macroRW)
   given packedWithCtxRW[E, T]: PackedSpork[ReadWriter[PackedWithCtx[E, T]]] = PackedWithCtxRW.pack().asInstanceOf[PackedSpork[ReadWriter[PackedWithCtx[E, T]]]]
 
   //////////////////////////////////////////////////////////////////////////////
@@ -129,25 +125,25 @@ object ReadWriters {
 
   // Warning: Do not use `summon` instead of `sporkRW2` etc. here.
 
-  private[sporks] object SporkRW extends SporkObjectBuilder[ReadWriter[Spork[_]]](sporkRW2.asInstanceOf)
+  private[sporks] object SporkRW extends SporkObjectBuilder[ReadWriter[Spork[?]]](sporkRW2.asInstanceOf)
   given sporkRW[T]: PackedSpork[ReadWriter[Spork[T]]] = SporkRW.pack().asInstanceOf[PackedSpork[ReadWriter[Spork[T]]]]
 
-  private[sporks] object SporkObjectRW extends SporkObjectBuilder[ReadWriter[SporkObject[_]]](sporkObjectRW2.asInstanceOf)
+  private[sporks] object SporkObjectRW extends SporkObjectBuilder[ReadWriter[SporkObject[?]]](sporkObjectRW2.asInstanceOf)
   given sporkObjectRW[T]: PackedSpork[ReadWriter[SporkObject[T]]] = SporkObjectRW.pack().asInstanceOf[PackedSpork[ReadWriter[SporkObject[T]]]]
 
-  private[sporks] object SporkClassRW extends SporkObjectBuilder[ReadWriter[SporkClass[_]]](sporkClassRW2.asInstanceOf)
+  private[sporks] object SporkClassRW extends SporkObjectBuilder[ReadWriter[SporkClass[?]]](sporkClassRW2.asInstanceOf)
   given sporkClassRW[T]: PackedSpork[ReadWriter[SporkClass[T]]] = SporkClassRW.pack().asInstanceOf[PackedSpork[ReadWriter[SporkClass[T]]]]
 
-  private[sporks] object SporkLambdaRW extends SporkObjectBuilder[ReadWriter[SporkLambda[_]]](sporkLambdaRW2.asInstanceOf)
+  private[sporks] object SporkLambdaRW extends SporkObjectBuilder[ReadWriter[SporkLambda[?]]](sporkLambdaRW2.asInstanceOf)
   given sporkLambdaRW[T]: PackedSpork[ReadWriter[SporkLambda[T]]] = SporkLambdaRW.pack().asInstanceOf[PackedSpork[ReadWriter[SporkLambda[T]]]]
 
-  private[sporks] object SporkEnvRW extends SporkObjectBuilder[ReadWriter[SporkEnv[_]]](sporkEnvRW2.asInstanceOf)
+  private[sporks] object SporkEnvRW extends SporkObjectBuilder[ReadWriter[SporkEnv[?]]](sporkEnvRW2.asInstanceOf)
   given sporkEnvRW[T]: PackedSpork[ReadWriter[SporkEnv[T]]] = SporkEnvRW.pack().asInstanceOf[PackedSpork[ReadWriter[SporkEnv[T]]]]
 
-  private[sporks] object SporkWithEnvRW extends SporkObjectBuilder[ReadWriter[SporkWithEnv[_, _]]](sporkWithEnvRW2.asInstanceOf)
+  private[sporks] object SporkWithEnvRW extends SporkObjectBuilder[ReadWriter[SporkWithEnv[?, ?]]](sporkWithEnvRW2.asInstanceOf)
   given sporkWithEnvRW[E, T]: PackedSpork[ReadWriter[SporkWithEnv[E, T]]] = SporkWithEnvRW.pack().asInstanceOf[PackedSpork[ReadWriter[SporkWithEnv[E, T]]]]
 
-  private[sporks] object SporkWithCtxRW extends SporkObjectBuilder[ReadWriter[SporkWithCtx[_, _]]](sporkWithCtxRW2.asInstanceOf)
+  private[sporks] object SporkWithCtxRW extends SporkObjectBuilder[ReadWriter[SporkWithCtx[?, ?]]](sporkWithCtxRW2.asInstanceOf)
   given sporkWithCtxRW[E, T]: PackedSpork[ReadWriter[SporkWithCtx[E, T]]] = SporkWithCtxRW.pack().asInstanceOf[PackedSpork[ReadWriter[SporkWithCtx[E, T]]]]
 
   //////////////////////////////////////////////////////////////////////////////

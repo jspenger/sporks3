@@ -27,7 +27,9 @@ object SporkClassBuilderErrorTests:
   class ClassWithParameters(i: Int) extends SporkClassBuilder[() => Int](() => i)
 
   class F[T]
-  class ClassWithContex[T: F] extends SporkClassBuilder[F[T]](summon)
+  class ClassWithContext1[T: F] extends SporkClassBuilder[F[T]](summon)
+  class ClassWithContext2[T](using F[T]) extends SporkClassBuilder[F[T]](summon)
+  class ClassWithContext3[T](implicit f: F[T]) extends SporkClassBuilder[F[T]](summon)
 
 @RunWith(classOf[JUnit4])
 class SporkClassBuilderErrorTests:
@@ -122,9 +124,31 @@ class SporkClassBuilderErrorTests:
       typeCheckErrors:
         """
         given F[Int] = new F[Int]()
-        ClassWithContex[Int].pack()
+        ClassWithContext1[Int].pack()
         """
       .contains:
         """
-        The constructor of the provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithContex` `<init>` contains a context parameter list.
+        The constructor of the provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithContext1` `<init>` contains a context parameter list.
+        """.strip()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+        given F[Int] = new F[Int]()
+        ClassWithContext2[Int].pack()
+        """
+      .contains:
+        """
+        The constructor of the provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithContext2` `<init>` contains a context parameter list.
+        """.strip()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+        given F[Int] = new F[Int]()
+        ClassWithContext3[Int].pack()
+        """
+      .contains:
+        """
+        The constructor of the provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithContext3` `<init>` contains a context parameter list.
         """.strip()

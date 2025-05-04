@@ -77,7 +77,8 @@ class SporkObjectBuilderErrorTests:
         object Builder extends SporkObjectBuilder[Int => String](x => x.toString.reverse)
         Builder.pack()
         """
-      .contains:
-        """
-        The provided SporkObjectBuilder `sporks.SporkObjectBuilderErrorTests._$Builder$` is not a top-level object; its owner `testNotTopLevelError` is not a top-level object nor a package.
-        """.strip()
+      .exists:
+        _.matches:
+          raw"""
+          The provided SporkObjectBuilder `.*Builder\$$` is not a top-level object; its owner `.*` is not a top-level object nor a package.
+          """.strip()

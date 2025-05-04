@@ -283,7 +283,7 @@ object Macros {
     }
 
     def containsContextParamList(sym: Symbol): Boolean = {
-      sym.paramSymss.exists(_.exists(_.flags.is(Flags.Implicit)))
+      sym.paramSymss.exists(_.exists(x => x.flags.is(Flags.Implicit) || x.flags.is(Flags.Given)))
     }
 
     val tree = builderExpr.asTerm
