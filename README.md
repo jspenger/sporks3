@@ -6,6 +6,12 @@ This is an experimental fork of the "Spores3" project created by Philipp Haller 
 This fork is heavily modified to fit another project that uses Sporks3 for serialization of closures.
 As such, it is not yet intended for general use, and will likely change significantly over the next few months.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="./sporky2.png">
+  <source media="(prefers-color-scheme: light)" srcset="./sporky1.png">
+  <img src="./sporky1.png" width="70" />
+</picture>
+
 ## Project Overview
 
 Pickle and unpickle your closures.
