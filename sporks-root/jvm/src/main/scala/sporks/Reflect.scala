@@ -1,7 +1,7 @@
 package sporks
 
 
-object Reflect {
+private[sporks] object Reflect {
 
   import scala.annotation.StaticAnnotation
   // Dummy annotation as JVM reflection is enabled by default

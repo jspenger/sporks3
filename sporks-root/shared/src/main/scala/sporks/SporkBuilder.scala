@@ -1,107 +1,21 @@
 package sporks
 
 import upickle.default.*
-import scala.quoted.*
 
 import sporks.Reflect
-import sporks.Spork.*
-import sporks.PackedSpork.*
+import sporks.Packed.*
 
 
 @Reflect.EnableReflectiveInstantiation
-trait SporkObjectBuilder[+T](val fun: T) {
-  import SporkObjectBuilder.*
-
-  final inline def pack(): PackedObject[T] =
-    ${ packMacro('this) }
-
-  final inline def build(): SporkObject[T] =
-    ${ buildMacro('this) }
+trait SporkBuilder[+T](val fun: T) {
+  final inline def pack(): Spork[T] =
+    ${ SporkBuilder.packMacro('this) }
 }
 
 
-@Reflect.EnableReflectiveInstantiation
-trait SporkClassBuilder[+T](val fun: T) {
-  import SporkClassBuilder.*
-
-  final inline def pack(): PackedClass[T] =
-    ${ packMacro('this) }
-
-  final inline def build(): SporkClass[T] =
-    ${ buildMacro('this) }
-}
-
-
-@Reflect.EnableReflectiveInstantiation
-private[sporks] trait SporkLambdaBuilder[+T](val fun: T) {
-  import SporkLambdaBuilder.*
-
-  final inline def pack(): PackedLambda[T] =
-    ${ packMacro('this) }
-
-  final inline def build(): SporkLambda[T] =
-    ${ buildMacro('this) }
-}
-
-
-object SporkEnvBuilder {
-  def apply[T](env: T)(using rw: PackedSpork[ReadWriter[T]]): PackedEnv[T] =
-    PackedEnv(write(env)(using rw.unwrap()), rw)
-
-  def pack[T](env: T)(using rw: PackedSpork[ReadWriter[T]]): PackedEnv[T] =
-    this.apply(env)(using rw)
-
-  def build[T](env: T)(using rw: Spork[ReadWriter[T]]): SporkEnv[T] =
-    SporkEnv(env, rw)
-}
-
-
-private[sporks] object SporkObjectBuilder {
-  def toString[T](builder: SporkObjectBuilder[T]): String =
-    builder.getClass().getName()
-
-  def fromString[T](str: String): SporkObjectBuilder[T] =
-    Reflect.getModuleFieldValue[SporkObjectBuilder[T]](str)
-
-  def packMacro[T](objectExpr: Expr[SporkObjectBuilder[T]])(using Type[T], Quotes): Expr[PackedObject[T]] =
-    Macros.isTopLevelObject(objectExpr)
-    '{ PackedObject($objectExpr.getClass().getName()) }
-
-  def buildMacro[T](objectExpr: Expr[SporkObjectBuilder[T]])(using Type[T], Quotes): Expr[SporkObject[T]] =
-    Macros.isTopLevelObject(objectExpr)
-    '{ SporkObject($objectExpr) }
-}
-
-
-private[sporks] object SporkClassBuilder {
-  def toString[T](builder: SporkClassBuilder[T]): String =
-    builder.getClass().getName()
-
-  def fromString[T](str: String): SporkClassBuilder[T] =
-    Reflect.getClassInstance[SporkClassBuilder[T]](str)
-
-  def packMacro[T](classExpr: Expr[SporkClassBuilder[T]])(using Type[T], Quotes): Expr[PackedClass[T]] =
-    Macros.isTopLevelClass(classExpr)
-    '{ PackedClass($classExpr.getClass().getName()) }
-
-  def buildMacro[T](classExpr: Expr[SporkClassBuilder[T]])(using Type[T], Quotes): Expr[SporkClass[T]] =
-    Macros.isTopLevelClass(classExpr)
-    '{ SporkClass($classExpr) }
-}
-
-
-private[sporks] object SporkLambdaBuilder {
-  def toString[T](builder: SporkLambdaBuilder[T]): String =
-    builder.getClass().getName()
-
-  def fromString[T](str: String): SporkLambdaBuilder[T] =
-    Reflect.getClassInstance[SporkLambdaBuilder[T]](str)
-
-  def packMacro[T](lambdaExpr: Expr[SporkLambdaBuilder[T]])(using Type[T], Quotes): Expr[PackedLambda[T]] =
-    // No checks needed, all relevant checks are done in the lambda factory `SporkBuilder.apply`.
-    '{ PackedLambda($lambdaExpr.getClass().getName()) }
-
-  def buildMacro[T](lambdaExpr: Expr[SporkLambdaBuilder[T]])(using Type[T], Quotes): Expr[SporkLambda[T]] =
-    // No checks needed, all relevant checks are done in the lambda factory `SporkBuilder.apply`.
-    '{ SporkLambda($lambdaExpr) }
+private object SporkBuilder {
+  import scala.quoted.*
+  def packMacro[T](expr: Expr[SporkBuilder[T]])(using Type[T], Quotes): Expr[Spork[T]] =
+    Macros.isTopLevelObject(expr)
+    '{ PackedObject($expr.getClass().getName()) }
 }

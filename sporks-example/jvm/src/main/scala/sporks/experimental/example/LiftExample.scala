@@ -4,15 +4,14 @@ import upickle.default.*
 
 import sporks.*
 import sporks.given
-import sporks.experimental.*
-import sporks.experimental.jvm.*
+import sporks.jvm.*
 
 
-object LiftExample {
+object AutoCaptureExample {
 
-  // The `Lift.apply` method and its alias `spx` does the following:
+  // The `AutoCapture.apply` method and its alias `spauto` does the following:
   //
-  // 1. LambdaLift: Lifts all captured symbols to parameters
+  // 1. Lifts all captured symbols to parameters
   // 2. Find the implicit codecs for each captured symbol
   // 3. Pack the new lifted function into a packed spork
   // 4. Pack the captured symbols together with their codecs
@@ -21,7 +20,7 @@ object LiftExample {
   //
   // {{{
   //   def foo(x: Int, y: Int) = {
-  //     spx { (i: Int) => x + y + i }
+  //     spauto{ (i: Int) => x + y + i }
   //   }
   // }}}
   //
@@ -43,10 +42,10 @@ object LiftExample {
 
   // A factory for a serialized function that checks if a number is between the
   // numbers `x` and `y`.
-  def isBetween(x: Int, y: Int): PackedSpork[Int => Boolean] = {
-    Lift.apply { (i: Int) => x <= i && i < y }
-    // // optionally, we can use the `spx` shorthand method:
-    // spx { (i: Int) => x <= i && i < y }
+  def isBetween(x: Int, y: Int): Spork[Int => Boolean] = {
+    AutoCapture.apply { (i: Int) => x <= i && i < y }
+    // // optionally, we can use the `auto` shorthand method:
+    // spauto{ (i: Int) => x <= i && i < y }
   }
 
 
@@ -54,23 +53,23 @@ object LiftExample {
   // captured and packed. Here we create a custom `Range` data type, and its
   // corresponding codec.
   case class Range(x: Int, y: Int)
-  object RangeRW extends SporkObjectBuilder[ReadWriter[Range]]({ macroRW })
-  given rangeRW: PackedSpork[ReadWriter[Range]] = RangeRW.pack()
+  object RangeRW extends SporkBuilder[ReadWriter[Range]]({ macroRW })
+  given rangeRW: Spork[ReadWriter[Range]] = RangeRW.pack()
 
   // Now we can create a similar factory but by capturing a `Range` object.
-  def isInRange(range: Range): PackedSpork[Int => Boolean] = {
-    // The `spx` method will automatically pack the `Range` object and its
+  def isInRange(range: Range): Spork[Int => Boolean] = {
+    // The `spauto` method will automatically pack the `Range` object and its
     // codec.
-    spx { (i: Int) => range.x <= i && i < range.y }
+    spauto{ (i: Int) => range.x <= i && i < range.y }
   }
 
 
   // // If the codec is missing, then it is not possible to capture and pack the
   // // value. It will emit the following error:
-  // // no implicit values were found that match type sporks.PackedSpork[upickle.default.ReadWriter[sporks.experimental.example.LiftExample.Range2]]
+  // // no implicit values were found that match type sporks.Spork[upickle.default.ReadWriter[sporks.experimental.example.AutoCaptureExample.Range2]]
   // case class Range2(x: Int, y: Int)
-  // def isInRange2(range: Range2): PackedSpork[Int => Boolean] = {
-  //   spx { (i: Int) => range.x <= i && i < range.y }
+  // def isInRange2(range: Range2): Spork[Int => Boolean] = {
+  //   spauto{ (i: Int) => range.x <= i && i < range.y }
   // }
 
 
@@ -78,7 +77,7 @@ object LiftExample {
     val btwn1020 = isBetween(10, 20)
 
     println(btwn1020)
-    // result: PackedWithEnv(PackedWithEnv(PackedLambda(sporks.experimental.example.LiftExample$Lambda$1),PackedEnv(10,PackedObject(sporks.ReadWriters$IntRW$))),PackedEnv(20,PackedObject(sporks.ReadWriters$IntRW$)))
+    // result: PackedWithEnv(PackedWithEnv(PackedLambda(sporks.experimental.example.AutoCaptureExample$Lambda$1),PackedEnv(10,PackedObject(sporks.ReadWriters$IntRW$))),PackedEnv(20,PackedObject(sporks.ReadWriters$IntRW$)))
 
     println(btwn1020.unwrap().apply(5))
     // result: false
@@ -89,11 +88,11 @@ object LiftExample {
     println(btwn1020.unwrap().apply(25))
     // result: false
 
-    val filter = Lift.apply { (l: List[Int]) => l.filter(btwn1020.unwrap()) }
-    // opt: val filter = spx { (l: List[Int]) => l.filter(btwn1020.unwrap()) }
+    val filter = AutoCapture.apply { (l: List[Int]) => l.filter(btwn1020.unwrap()) }
+    // opt: val filter = spauto{ (l: List[Int]) => l.filter(btwn1020.unwrap()) }
 
     println(filter)
-    // result: PackedWithEnv(PackedLambda(sporks.experimental.example.LiftExample$Lambda$3),PackedEnv({"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedLambda","fun":"sporks.experimental.example.LiftExample$Lambda$1"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"10","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$IntRW$"}}},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"20","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$IntRW$"}}},PackedObject(sporks.ReadWriters$PackedSporkRW$)))
+    // result: PackedWithEnv(PackedLambda(sporks.experimental.example.AutoCaptureExample$Lambda$3),PackedEnv({"$type":"sporks.Packed.PackedWithEnv","packed":{"$type":"sporks.Packed.PackedWithEnv","packed":{"$type":"sporks.Packed.PackedLambda","fun":"sporks.experimental.example.AutoCaptureExample$Lambda$1"},"packedEnv":{"$type":"sporks.Packed.PackedEnv","env":"10","rw":{"$type":"sporks.Packed.PackedObject","fun":"sporks.ReadWriters$IntRW$"}}},"packedEnv":{"$type":"sporks.Packed.PackedEnv","env":"20","rw":{"$type":"sporks.Packed.PackedObject","fun":"sporks.ReadWriters$IntRW$"}}},PackedObject(sporks.ReadWriters$SporkRW$)))
 
     println(filter.unwrap().apply(List(9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)))
     // result: List(10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
@@ -101,7 +100,7 @@ object LiftExample {
     val inRange = isInRange(Range(1, 2))
 
     println(inRange)
-    // result: PackedWithEnv(PackedWithEnv(PackedLambda(sporks.experimental.example.LiftExample$Lambda$2),PackedEnv({"x":1,"y":2},PackedObject(sporks.experimental.example.LiftExample$RangeRW$))),PackedEnv(null,PackedObject(sporks.ReadWriters$UnitRW$)))
+    // result: PackedWithEnv(PackedWithEnv(PackedLambda(sporks.experimental.example.AutoCaptureExample$Lambda$2),PackedEnv({"x":1,"y":2},PackedObject(sporks.experimental.example.AutoCaptureExample$RangeRW$))),PackedEnv(null,PackedObject(sporks.ReadWriters$UnitRW$)))
 
     println(inRange.unwrap().apply(0))
     // result: false

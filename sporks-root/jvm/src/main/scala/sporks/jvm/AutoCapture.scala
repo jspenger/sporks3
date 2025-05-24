@@ -1,20 +1,21 @@
-package sporks.experimental.jvm
+package sporks.jvm
 
 import scala.quoted.*
+import upickle.default.ReadWriter
 
 import sporks.*
 import sporks.given
 
 
-object Lift {
+object AutoCapture {
 
-  private type Codec[T] = PackedSpork[upickle.default.ReadWriter[T]]
+  private type Codec[T] = Spork[ReadWriter[T]]
 
-  inline def apply[F](inline f: F): PackedSpork[F] = {
+  inline def apply[F](inline f: F): Spork[F] = {
     ${ liftImpl[F]('f) }
   }
 
-  private[sporks] def liftImpl[F: Type](fExpr: Expr[F])(using Quotes): Expr[PackedSpork[F]] = {
+  private def liftImpl[F: Type](fExpr: Expr[F])(using Quotes): Expr[Spork[F]] = {
     import quotes.reflect.*
 
     // 1. Get all captured symbols
@@ -28,7 +29,7 @@ object Lift {
             (new Lambda())
           }
           lambda.pack()
-        }.asExprOf[PackedSpork[F]]
+        }.asExprOf[Spork[F]]
     }
 
     // 2. Check if every capture has a Codec
@@ -80,7 +81,7 @@ object Lift {
     val lifted = liftAllSymbols(Symbol.spliceOwner, captures.reverse, fExpr.asTerm)
 
     // 4. Pack the new lifted function and pack it with the captured symbols and codecs
-    val packed: Expr[PackedSpork[Any]] = '{
+    val packed: Expr[Spork[Any]] = '{
       val lambda = {
         class Lambda extends SporkLambdaBuilder(${lifted.asExpr})
         (new Lambda())
@@ -94,17 +95,17 @@ object Lift {
       val cod = codec
       tmp = '{
         $tmp
-          .asInstanceOf[PackedSpork[Any => Any]]
+          .asInstanceOf[Spork[Any => Any]]
           .withEnv($env)(using $cod.asInstanceOf)
       }
     }
     '{
-      $tmp.asInstanceOf[PackedSpork[F]]
+      $tmp.asInstanceOf[Spork[F]]
     }
   }
 
 
-  private[sporks] def capturedSymbols[T](bodyExpr: Expr[T])(using Quotes): List[quotes.reflect.Symbol] = {
+  private def capturedSymbols[T](bodyExpr: Expr[T])(using Quotes): List[quotes.reflect.Symbol] = {
     import quotes.reflect.*
 
     def ownerChainContains(sym: Symbol, transitiveOwner: Symbol): Boolean =

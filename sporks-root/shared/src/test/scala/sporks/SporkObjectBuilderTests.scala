@@ -9,59 +9,45 @@ import sporks.given
 import sporks.*
 import sporks.TestUtils.*
 
-object SporkObjectBuilderTests:
-  object Thunk extends SporkObjectBuilder[() => Int](() => 10)
+object SporkBuilderTests:
+  object Thunk extends SporkBuilder[() => Int](() => 10)
 
-  object Predicate extends SporkObjectBuilder[Int => Boolean](x => x > 10)
+  object Predicate extends SporkBuilder[Int => Boolean](x => x > 10)
 
-  object HigherLevelFilter extends SporkObjectBuilder[PackedSpork[Int => Boolean] => Int => Option[Int]]({ env => x => if env.unwrap().apply(x) then Some(x) else None })
+  object HigherLevelFilter extends SporkBuilder[Spork[Int => Boolean] => Int => Option[Int]]({ env => x => if env.unwrap().apply(x) then Some(x) else None })
 
-  object PredicateCtx extends SporkObjectBuilder[Int ?=> Boolean](summon[Int] > 10)
+  object PredicateCtx extends SporkBuilder[Int ?=> Boolean](summon[Int] > 10)
 
-  object OptionMapper extends SporkObjectBuilder[Option[Int] => Int](x => x.getOrElse(0))
+  object OptionMapper extends SporkBuilder[Option[Int] => Int](x => x.getOrElse(0))
 
-  object ListReducer extends SporkObjectBuilder[List[Int] => Int](x => x.sum)
+  object ListReducer extends SporkBuilder[List[Int] => Int](x => x.sum)
 
   object NestedBuilder:
-    object Predicate extends SporkObjectBuilder[Int => Boolean](x => x > 10)
+    object Predicate extends SporkBuilder[Int => Boolean](x => x > 10)
 
 @RunWith(classOf[JUnit4])
-class SporkObjectBuilderTests:
-  import SporkObjectBuilderTests.*
+class SporkBuilderTests:
+  import SporkBuilderTests.*
 
   @Test
-  def testSporkObjectBuilderPack(): Unit =
+  def testSporkBuilderPack(): Unit =
     val packed = Predicate.pack()
     val predicate = packed.unwrap()
     assertTrue(predicate(11))
     assertFalse(predicate(9))
 
-    val built = Predicate.build()
-    val predicate2 = built.unwrap()
-    assertTrue(predicate2(11))
-    assertFalse(predicate2(9))
-
   @Test
-  def testNestedSporkObjectBuilderPack(): Unit =
+  def testNestedSporkBuilderPack(): Unit =
     val packed = NestedBuilder.Predicate.pack()
     val predicate = packed.unwrap()
     assertTrue(predicate(11))
     assertFalse(predicate(9))
 
-    val built = NestedBuilder.Predicate.build()
-    val predicate2 = built.unwrap()
-    assertTrue(predicate2(11))
-    assertFalse(predicate2(9))
-
   @Test
-  def testSporkObjectBuilderThunk(): Unit =
+  def testSporkBuilderThunk(): Unit =
     val packed = Thunk.pack()
     val thunk = packed.unwrap()
     assertEquals(10, thunk())
-
-    val built = Thunk.build()
-    val thunk2 = built.unwrap()
-    assertEquals(10, thunk2())
 
   @Test
   def testWithEnv(): Unit =
@@ -70,11 +56,6 @@ class SporkObjectBuilderTests:
     assertFalse(packed9.unwrap())
     assertTrue(packed11.unwrap())
 
-    val built9 = Predicate.build().withEnv(9)
-    val built11 = Predicate.build().withEnv(11)
-    assertFalse(built9.unwrap())
-    assertTrue(built11.unwrap())
-
   @Test
   def testWithCtx(): Unit =
     val packed9 = PredicateCtx.pack().withCtx(9)
@@ -82,78 +63,47 @@ class SporkObjectBuilderTests:
     assertFalse(packed9.unwrap())
     assertTrue(packed11.unwrap())
 
-    val built9 = PredicateCtx.build().withCtx(9)
-    val built11 = PredicateCtx.build().withCtx(11)
-    assertFalse(built9.unwrap())
-    assertTrue(built11.unwrap())
-
   @Test
-  def testPackBuildHigherOrderSporkObjectBuilder(): Unit =
+  def testPackBuildHigherOrderSporkBuilder(): Unit =
     val predicate = Predicate.pack()
     val filter = HigherLevelFilter.pack().withEnv(predicate).unwrap()
     assertEquals(Some(11), filter(11))
     assertEquals(None, filter(9))
 
-    val predicate2 = Predicate.build()
-    val filter2 = HigherLevelFilter.build().withEnv(predicate).unwrap()
-    assertEquals(Some(11), filter2(11))
-    assertEquals(None, filter2(9))
-
   @Test
-  def testPackedSporkReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$Predicate$"}"""
+  def testSporkReadWriter(): Unit =
+    val json = """{"$type":"sporks.Packed.PackedObject","fun":"sporks.SporkBuilderTests$Predicate$"}"""
 
     val packed = upickle.default.write(Predicate.pack())
     assertEquals(json, packed)
 
-    val loaded = upickle.default.read[PackedSpork[Int => Boolean]](json).unwrap()
+    val loaded = upickle.default.read[Spork[Int => Boolean]](json).unwrap()
     assertTrue(loaded(11))
     assertFalse(loaded(9))
 
-    val packed2 = upickle.default.write(Predicate.build())
-    assertEquals(json, packed2)
-
-    val loaded2 = upickle.default.read[Spork[Int => Boolean]](json).unwrap()
-    assertTrue(loaded2(11))
-    assertFalse(loaded2(9))
-
   @Test
-  def testNestedPackedSporkReadWriter(): Unit =
-    val json = """{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$NestedBuilder$Predicate$"}"""
+  def testNestedSporkReadWriter(): Unit =
+    val json = """{"$type":"sporks.Packed.PackedObject","fun":"sporks.SporkBuilderTests$NestedBuilder$Predicate$"}"""
 
     val packed = upickle.default.write(NestedBuilder.Predicate.pack())
     assertEquals(json, packed)
 
-    val loaded = upickle.default.read[PackedSpork[Int => Boolean]](json).unwrap()
+    val loaded = upickle.default.read[Spork[Int => Boolean]](json).unwrap()
     assertTrue(loaded(11))
     assertFalse(loaded(9))
 
-    val packed2 = upickle.default.write(NestedBuilder.Predicate.build())
-    assertEquals(json, packed2)
-
-    val loaded2 = upickle.default.read[Spork[Int => Boolean]](json).unwrap()
-    assertTrue(loaded2(11))
-    assertFalse(loaded2(9))
-
   @Test
-  def testPackedSporkReadWriterWithEnv(): Unit =
-    val json = """{"$type":"sporks.PackedSpork.PackedWithEnv","packed":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.SporkObjectBuilderTests$HigherLevelFilter$"},"packedEnv":{"$type":"sporks.PackedSpork.PackedEnv","env":"{\"$type\":\"sporks.PackedSpork.PackedObject\",\"fun\":\"sporks.SporkObjectBuilderTests$Predicate$\"}","rw":{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.ReadWriters$PackedObjectRW$"}}}"""
+  def testSporkReadWriterWithEnv(): Unit =
+    val json = """{"$type":"sporks.Packed.PackedWithEnv","packed":{"$type":"sporks.Packed.PackedObject","fun":"sporks.SporkBuilderTests$HigherLevelFilter$"},"packedEnv":{"$type":"sporks.Packed.PackedEnv","env":"{\"$type\":\"sporks.Packed.PackedObject\",\"fun\":\"sporks.SporkBuilderTests$Predicate$\"}","rw":{"$type":"sporks.Packed.PackedObject","fun":"sporks.ReadWriters$SporkRW$"}}}"""
 
     val predicate = Predicate.pack()
     val filter = HigherLevelFilter.pack().withEnv(predicate)
     val packed = upickle.default.write(filter)
     assertEquals(json, packed)
 
-    val loaded = upickle.default.read[PackedSpork[Int => Option[Int]]](json).unwrap()
+    val loaded = upickle.default.read[Spork[Int => Option[Int]]](json).unwrap()
     assertEquals(Some(11), loaded(11))
     assertEquals(None, loaded(9))
-
-    val packed2 = upickle.default.write(HigherLevelFilter.build().withEnv(predicate))
-    assertEquals(json, packed2)
-
-    val loaded2 = upickle.default.read[Spork[Int => Option[Int]]](json).unwrap()
-    assertEquals(Some(11), loaded2(11))
-    assertEquals(None, loaded2(9))
 
   @Test
   def testOptionEnvironment(): Unit =

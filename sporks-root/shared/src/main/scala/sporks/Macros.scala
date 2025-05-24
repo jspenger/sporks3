@@ -3,7 +3,7 @@ package sporks
 import scala.quoted.*
 
 
-object Macros {
+private[sporks] object Macros {
   // The following method is adapted from Spores3. The original code is licensed
   // under the Apache License, Version 2.0. We have included the original code
   // as a comment for reference.
@@ -234,10 +234,10 @@ object Macros {
     val owner = builderTpe.typeSymbol.maybeOwner
 
     if (!isObject(builderTpe.typeSymbol)) {
-      report.error(s"The provided SporkObjectBuilder `${builderTpe.typeSymbol.fullName}` is not an object.")
+      report.error(s"The provided SporkBuilder `${builderTpe.typeSymbol.fullName}` is not an object.")
     }
     if (!allOwnersOK(owner)) {
-      report.error(s"The provided SporkObjectBuilder `${builderTpe.typeSymbol.fullName}` is not a top-level object; its owner `${owner.name}` is not a top-level object nor a package.")
+      report.error(s"The provided SporkBuilder `${builderTpe.typeSymbol.fullName}` is not a top-level object; its owner `${owner.name}` is not a top-level object nor a package.")
     }
 
     '{ () }
