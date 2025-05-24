@@ -13,7 +13,7 @@ import sporks.TestUtils.*
 // // Invalid capture of variable `x`. Use the first parameter of a spork's body to refer to the spork's environment.bloop
 // // ... but reproducing it with the typeCheckErrors macro is not possible as the object needs to be non-nested top-level.
 // object Issue001:
-//   def foo(x: Int): PackedSpork[Int => Boolean] = SporkBuilder.apply[Int => Boolean] { y => y > x }
+//   def foo(x: Int): Spork[Int => Boolean] = Spork.apply[Int => Boolean] { y => y > x }
 
 @RunWith(classOf[JUnit4])
 class SporkLambdaErrorTests:
@@ -24,7 +24,7 @@ class SporkLambdaErrorTests:
       typeCheckErrors:
         """
         val y = 12
-        SporkBuilder.apply[Int => Int] { x => x + y }
+        Spork.apply[Int => Int] { x => x + y }
         """
       .contains:
         """
@@ -34,7 +34,7 @@ class SporkLambdaErrorTests:
     assertTrue:
       typeCheckErrors:
         """
-        SporkBuilder.apply[Int => Int] { x => SporkBuilder.apply[Int => Int] { y => x + y }.unwrap().apply(x) }
+        Spork.apply[Int => Int] { x => Spork.apply[Int => Int] { y => x + y }.unwrap().apply(x) }
         """
       .contains:
         """
@@ -46,7 +46,7 @@ class SporkLambdaErrorTests:
     assertTrue:
       typeCheckErrors:
         """
-        def fun(x: Int): PackedSpork[Int => Boolean] = SporkBuilder.apply[Int => Boolean] { y => y > x }
+        def fun(x: Int): Spork[Int => Boolean] = Spork.apply[Int => Boolean] { y => y > x }
         """
       .contains:
         """
@@ -57,7 +57,7 @@ class SporkLambdaErrorTests:
       typeCheckErrors:
         """
         object ShouldFail:
-          def fun(x: Int): PackedSpork[Int => Boolean] = SporkBuilder.apply[Int => Boolean] { y => y > x }
+          def fun(x: Int): Spork[Int => Boolean] = Spork.apply[Int => Boolean] { y => y > x }
         """
       .contains:
         """
@@ -72,13 +72,13 @@ class SporkLambdaErrorTests:
       typeCheckErrors:
         """
         class TestClass {
-          SporkBuilder.apply { () => this.toString() }.unwrap()
+          Spork.apply { () => this.toString() }.unwrap()
         }
         (new TestClass())
         """
       .contains:
         """
-        Invalid capture of variable `TestClass`. Use the first parameter of a spork's body to refer to the spork's environment.
+        Invalid capture of `this` from outer class.
         """.strip()
 
     assertTrue:
@@ -86,20 +86,20 @@ class SporkLambdaErrorTests:
         """
         class Outer:
           val x = 12
-          SporkBuilder.apply { () => 42 * x }.unwrap()
+          Spork.apply { () => 42 * x }.unwrap()
         (new Outer())
         """
       .contains:
         """
-        Invalid capture of `this` from class Some(Outer).
+        Invalid capture of `this` from class Outer.
         """.strip()
 
     assertTrue:
       typeCheckErrors:
         """
-        SporkBuilder.apply { () => 42 * captureMeIfYouCan }.unwrap()
+        Spork.apply { () => 42 * captureMeIfYouCan }.unwrap()
         """
       .contains:
         """
-        Invalid capture of `this` from class Some(SporkLambdaErrorTests).
+        Invalid capture of `this` from class SporkLambdaErrorTests.
         """.strip()

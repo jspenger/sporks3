@@ -115,10 +115,10 @@ class SporkClassBuilderErrorTests:
     // but will not work:
     //
     // class PackedRW[T: ReadWriter] extends SporkClassBuilder[ReadWriter[T]](summon[ReadWriter[T]])
-    // given PackedSpork[ReadWriter[T]] = PackedRW[T].pack()
+    // given Spork[ReadWriter[T]] = PackedRW[T].pack()
     //
     // // This will crash at runtime, as the init method is assumed to not have any params.
-    // summon[PackedSpork[ReadWriter[Int]]].unwrap()
+    // summon[Spork[ReadWriter[Int]]].unwrap()
 
     assertTrue:
       typeCheckErrors:

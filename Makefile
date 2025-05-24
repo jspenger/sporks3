@@ -1,3 +1,9 @@
+.PHONY: build
+
+build:
+	sbt -v compile
+	sbt -v test:compile
+
 .PHONY: clean
 
 clean:
@@ -11,12 +17,6 @@ clean:
 	find . -name metals.sbt | xargs rm -fr
 	rm -fr project/project/
 	find . -name target | xargs rm -fr
-
-.PHONY: build
-
-build:
-	sbt -v compile
-	sbt -v test:compile
 
 .PHONY: test
 

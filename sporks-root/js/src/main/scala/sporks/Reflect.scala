@@ -1,7 +1,7 @@
 package sporks
 
 
-object Reflect {
+private[sporks] object Reflect {
 
   import scala.scalajs.reflect.{Reflect => JSReflect}
 

@@ -5,77 +5,80 @@ import upickle.default.*
 
 
 sealed trait Spork[+T] {
-  import sporks.Spork.*
-  import sporks.PackedSpork.*
+  import sporks.Packed.*
 
-  def withEnv[T1, R](env: T1)(using rw: Spork[ReadWriter[T1]])(using @implicitNotFound(CanWithEnv.MSG) ev: CanWithEnv[T, T1, R]): SporkWithEnv[T1, R] = {
-    SporkWithEnv(this, SporkEnv(env, rw))
+  def withEnv[T1, R](env: T1)(using prw: Spork[ReadWriter[T1]])(using @implicitNotFound(CanWithEnv.MSG) ev: CanWithEnv[T, T1, R]): Spork[R] = {
+    PackedWithEnv(this, PackedEnv(write(env)(using prw.unwrap()), prw))
   }
 
-  def withEnv2[T1, R](env: Spork[T1])(using @implicitNotFound(CanWithEnv.MSG) ev: CanWithEnv[T, T1, R]): SporkWithEnv[T1, R] = {
-    SporkWithEnv(this, env)
+  /** Optimization for applying this `Spork[T1 => R]` directly to the
+    * contents of a `Spork[T1]`.
+    *
+    * This avoids the need to pack and unwrap the Spork, which is what
+    * otherwise is necessary for achieving the same result by using `withEnv`.
+    *
+    * Using this method has performance benefits as it avoids unnecessary
+    * packing and unwrapping, as well as by reducing the size of the contained
+    * serialized data.
+    */
+  def withEnv2[T1, R](env: Spork[T1])(using @implicitNotFound(CanWithEnv.MSG) ev: CanWithEnv[T, T1, R]): Spork[R] = {
+    PackedWithEnv(this, env)
   }
 
-  def withCtx[T1, R](env: T1)(using rw: Spork[ReadWriter[T1]])(using @implicitNotFound(CanWithCtx.MSG) ev: CanWithCtx[T, T1, R]): SporkWithCtx[T1, R] = {
-    SporkWithCtx(this, SporkEnv(env, rw))
+  def withCtx[T1, R](env: T1)(using prw: Spork[ReadWriter[T1]])(using @implicitNotFound(CanWithCtx.MSG) ev: CanWithCtx[T, T1, R]): Spork[R] = {
+    PackedWithCtx(this, PackedEnv(write(env)(using prw.unwrap()), prw))
   }
 
-  def withCtx2[T1, R](env: Spork[T1])(using @implicitNotFound(CanWithCtx.MSG) ev: CanWithCtx[T, T1, R]): SporkWithCtx[T1, R] = {
-    SporkWithCtx(this, env)
+  /** Optimization for applying this `Spork[T1 ?=> R]` directly to the
+    * contents of a `Spork[T1]`.
+    *
+    * This avoids the need to pack and unwrap the Spork, which is what
+    * otherwise is necessary for achieving the same result by using `withEnv`.
+    *
+    * Using this method has performance benefits as it avoids unnecessary
+    * packing and unwrapping, as well as by reducing the size of the contained
+    * serialized data.
+    */
+  def withCtx2[T1, R](env: Spork[T1])(using @implicitNotFound(CanWithCtx.MSG) ev: CanWithCtx[T, T1, R]): Spork[R] = {
+    PackedWithCtx(this, env)
   }
 
-  def map[U](fun: T => U)(using rw: Spork[ReadWriter[U]]): Spork[U] = {
-    SporkEnv(fun.apply(this.unwrap()), rw)
-  }
-
-  def map2[U](fun: Spork[T => U]): Spork[U] = {
+  def map[U](fun: Spork[T => U]): Spork[U] = {
     fun.withEnv2(this)
   }
 
-  def flatMap[U](fun: T => Spork[U])(using rw: Spork[ReadWriter[U]]): Spork[U] = {
-    SporkEnv(fun.apply(this.unwrap()).unwrap(), rw)
-  }
-
-  def flatMap2[U](fun: Spork[T => Spork[U]]): Spork[U] = {
+  def flatMap[U](fun: Spork[T => Spork[U]]): Spork[U] = {
     fun.withEnv2(this).unwrap()
   }
 
   def unwrap(): T = {
     this match
-      case SporkObject(builder) => builder.fun
-      case SporkClass(builder)  => builder.fun
-      case SporkLambda(builder) => builder.fun
-      case SporkEnv(env, rw)    => env
-      case SporkWithEnv(spork, env) => spork.unwrap()(env.unwrap())
-      case SporkWithCtx(spork, env) => spork.unwrap()(using env.unwrap())
-  }
-
-  def pack(): PackedSpork[T] = {
-    this match
-      case SporkObject(builder) => PackedObject(builder.getClass().getName())
-      case SporkClass(builder)  => PackedClass (builder.getClass().getName())
-      case SporkLambda(builder) => PackedLambda(builder.getClass().getName())
-      case SporkEnv(env, rw)    => PackedEnv(write(env)(using rw.unwrap()), rw.pack())
-      case SporkWithEnv(spork, env) => PackedWithEnv(spork.pack(), env.pack())
-      case SporkWithCtx(spork, env) => PackedWithCtx(spork.pack(), env.pack())
+      case PackedObject(fun) => Reflect.getModuleFieldValue[SporkBuilder[T]](fun).fun
+      case PackedClass(fun)  => Reflect.getClassInstance[SporkClassBuilder[T]](fun).fun
+      case PackedLambda(fun) => Reflect.getClassInstance[SporkLambdaBuilder[T]](fun).fun
+      case PackedEnv(env, rw) => read(env)(using rw.unwrap())
+      case PackedWithEnv(packed, packedEnv) => packed.unwrap()(packedEnv.unwrap())
+      case PackedWithCtx(packed, packedEnv) => packed.unwrap()(using packedEnv.unwrap())
   }
 }
 
 
-object Spork {
+private object Packed {
 
   // Static:
-  final case class SporkObject[+T](builder: SporkObjectBuilder[T]) extends Spork[T]
-  final case class SporkClass[+T] (builder: SporkClassBuilder[T])  extends Spork[T]
-  final case class SporkLambda[+T](builder: SporkLambdaBuilder[T]) extends Spork[T]
+  final case class PackedObject[+T](fun: String) extends Spork[T]
+  final case class PackedClass[+T] (fun: String) extends Spork[T]
+  final case class PackedLambda[+T](fun: String) extends Spork[T]
   // Dynamic:
-  final case class SporkEnv[T]        (env: T, rw: Spork[ReadWriter[T]])     extends Spork[T]
-  final case class SporkWithEnv[E, +T](spork: Spork[E => T],  env: Spork[E]) extends Spork[T]
-  final case class SporkWithCtx[E, +T](spork: Spork[E ?=> T], env: Spork[E]) extends Spork[T]
+  final case class PackedEnv[E]        (env: String, rw: Spork[ReadWriter[E]])       extends Spork[E]
+  final case class PackedWithEnv[E, +T](packed: Spork[E => T],  packedEnv: Spork[E]) extends Spork[T]
+  final case class PackedWithCtx[E, +T](packed: Spork[E ?=> T], packedEnv: Spork[E]) extends Spork[T]
 
-  private type CanWithEnv[T, T1, R] = Spork[T] <:< Spork[T1 => R]
-  private object CanWithEnv { inline val MSG = "Cannot pack contained type ${T} with environment type ${T1}. It is not a function type of ${T1} => ${R}." }
-
-  private type CanWithCtx[T, T1, R] = Spork[T] <:< Spork[T1 ?=> R]
-  private object CanWithCtx { inline val MSG = "Cannot pack contained type ${T} with context type ${T1}. It is not a function type of ${T1} ?=> ${R}." }
 }
+
+
+private type CanWithEnv[T, T1, R] = Spork[T] <:< Spork[T1 => R]
+private object CanWithEnv { inline val MSG = "Cannot pack contained type ${T} with environment type ${T1}. It is not a function type of ${T1} => ${R}." }
+
+private type CanWithCtx[T, T1, R] = Spork[T] <:< Spork[T1 ?=> R]
+private object CanWithCtx { inline val MSG = "Cannot pack contained type ${T} with context type ${T1}. It is not a function type of ${T1} ?=> ${R}." }

@@ -9,23 +9,23 @@ import sporks.given
 import sporks.*
 import sporks.TestUtils.*
 
-object SporkObjectBuilderErrorTests:
-  class NotObjObj extends SporkObjectBuilder[Int => Int](x => x)
+object SporkBuilderErrorTests:
+  class NotObjObj extends SporkBuilder[Int => Int](x => x)
 
   class SomeClass:
-    object NotTopLevel extends SporkObjectBuilder[Int => Int](x => x)
+    object NotTopLevel extends SporkBuilder[Int => Int](x => x)
 
-  def someMethod: SporkObjectBuilder[Int => Int] = {
-    object NotTopLevel extends SporkObjectBuilder[Int => Int](x => x)
+  def someMethod: SporkBuilder[Int => Int] = {
+    object NotTopLevel extends SporkBuilder[Int => Int](x => x)
     NotTopLevel
   }
 
 @RunWith(classOf[JUnit4])
-class SporkObjectBuilderErrorTests:
-  import SporkObjectBuilderErrorTests.*
+class SporkBuilderErrorTests:
+  import SporkBuilderErrorTests.*
 
   @Test
-  def testClassSporkObjectBuilderError(): Unit =
+  def testClassSporkBuilderError(): Unit =
     assertTrue:
       typeCheckErrors:
         """
@@ -33,7 +33,7 @@ class SporkObjectBuilderErrorTests:
         """
       .contains:
         """
-        The provided SporkObjectBuilder `sporks.SporkObjectBuilderErrorTests$.NotObjObj` is not an object.
+        The provided SporkBuilder `sporks.SporkBuilderErrorTests$.NotObjObj` is not an object.
         """.strip()
 
     assertTrue:
@@ -44,7 +44,7 @@ class SporkObjectBuilderErrorTests:
         """
       .contains:
         """
-        The provided SporkObjectBuilder `sporks.SporkObjectBuilderErrorTests$.NotObjObj` is not an object.
+        The provided SporkBuilder `sporks.SporkBuilderErrorTests$.NotObjObj` is not an object.
         """.strip()
 
   @Test
@@ -57,7 +57,7 @@ class SporkObjectBuilderErrorTests:
         """
       .contains:
         """
-        The provided SporkObjectBuilder `sporks.SporkObjectBuilderErrorTests$.SomeClass.NotTopLevel$` is not a top-level object; its owner `SomeClass` is not a top-level object nor a package.
+        The provided SporkBuilder `sporks.SporkBuilderErrorTests$.SomeClass.NotTopLevel$` is not a top-level object; its owner `SomeClass` is not a top-level object nor a package.
         """.strip()
 
     assertTrue:
@@ -68,17 +68,17 @@ class SporkObjectBuilderErrorTests:
         """
       .contains:
         """
-        The provided SporkObjectBuilder `sporks.SporkObjectBuilder` is not an object.
+        The provided SporkBuilder `sporks.SporkBuilder` is not an object.
         """.strip()
 
     assertTrue:
       typeCheckErrors:
         """
-        object Builder extends SporkObjectBuilder[Int => String](x => x.toString.reverse)
+        object Builder extends SporkBuilder[Int => String](x => x.toString.reverse)
         Builder.pack()
         """
       .exists:
         _.matches:
           raw"""
-          The provided SporkObjectBuilder `.*Builder\$$` is not a top-level object; its owner `.*` is not a top-level object nor a package.
+          The provided SporkBuilder `.*Builder\$$` is not a top-level object; its owner `.*` is not a top-level object nor a package.
           """.strip()

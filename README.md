@@ -16,32 +16,32 @@ As such, it is not yet intended for general use, and will likely change signific
 
 Pickle and unpickle your closures.
 There are three ways in which you can create a spork: 
-- as an object, extending the `SporkObjectBuilder` trait
+- as an object, extending the `SporkBuilder` trait
 - as a class, extending the `SporkClassBuilder` trait
-- or, as a lambda, using the `SporkBuilder.apply` lambda factory (JVM only)
+- or, as a lambda, using the `Spork.apply` lambda factory (JVM only)
 
-Using any of these three methods, you can create a `PackedSpork` object, by calling the `pack` method on a SporkObjectBuilder or SporkClassBuilder object, or by using the lambda factory directly.
+Using any of these three methods, you can create a `Spork` object, by calling the `pack` method on a SporkBuilder or SporkClassBuilder object, or by using the lambda factory directly.
 ```scala
-SporkObjectBuilder[T](fun: T) -- pack() --> PackedSpork[T]
-SporkClassBuilder [T](fun: T) -- pack() --> PackedSpork[T]
-SporkBuilder.apply[T](fun: T) ------------> PackedSpork[T]
+SporkBuilder[T](fun: T) -- pack() --> Spork[T]
+SporkClassBuilder [T](fun: T) -- pack() --> Spork[T]
+Spork.apply[T](fun: T) ------------> Spork[T]
 ```
 
-A PackedSpork can be used to `unwrap` the closure. 
+A Spork can be used to `unwrap` the closure. 
 ```scala
-PackedSpork[T] -- unwrap() --> T
+Spork[T] -- unwrap() --> T
 ```
 
-Additionally, a PackedSpork can be partially applied to a serializable `env`ironment variable, using either the `withEnv` or the `withCtx` methods.
+Additionally, a Spork can be partially applied to a serializable `env`ironment variable, using either the `withEnv` or the `withCtx` methods.
 ```scala
-PackedSpork[E  => T] -- withEnv(env: E)(using PackedSpork[ReadWriter[E]]) --> PackedSpork[T]
-PackedSpork[E ?=> T] -- withCtx(env: E)(using PackedSpork[ReadWriter[E]]) --> PackedSpork[T]
+Spork[E  => T] -- withEnv(env: E)(using Spork[ReadWriter[E]]) --> Spork[T]
+Spork[E ?=> T] -- withCtx(env: E)(using Spork[ReadWriter[E]]) --> Spork[T]
 ```
 
-It can also be partially applied directly to a PackedSpork using the `withEnv2` or `withCtx2` methods.
+It can also be partially applied directly to a Spork using the `withEnv2` or `withCtx2` methods.
 ```scala
-PackedSpork[E  => T] -- withEnv2(env: PackedSpork[E]) --> PackedSpork[T]
-PackedSpork[E ?=> T] -- withCtx2(env: PackedSpork[E]) --> PackedSpork[T]
+Spork[E  => T] -- withEnv2(env: Spork[E]) --> Spork[T]
+Spork[E ?=> T] -- withCtx2(env: Spork[E]) --> Spork[T]
 ```
 
 ## Example
@@ -54,16 +54,16 @@ import sporks.given
 import sporks.jvm.*
 ```
 
-SporkObjectBuilders are the most robust way to create sporks.
+SporkBuilders are the most robust way to create sporks.
 ```scala
 object Predicate
-    extends SporkObjectBuilder[Int => Boolean]({ x =>
+    extends SporkBuilder[Int => Boolean]({ x =>
       x > 10
     })
 
 object Filter
-    extends SporkObjectBuilder[
-      PackedSpork[Int => Boolean] => Int => Boolean
+    extends SporkBuilder[
+      Spork[Int => Boolean] => Int => Boolean
     ]({ env => x =>
       env.unwrap().apply(x)
     })
@@ -75,14 +75,14 @@ fun(11) // true
 fun(9) // false
 ```
 
-PackedSporks can be serialized/pickled and deserialized/unpickled by using the upickle library's ReadWriter.
+Sporks can be serialized/pickled and deserialized/unpickled by using the upickle library's ReadWriter.
 ```scala
 import upickle.default.* // imports: read, write, etc.
 
 // ...
 val filter    = Filter.pack().withEnv(predicate)
-val pickled   = write(filter) // "PackedWithEnv(PackedObject(sporks.Filter$),{"$type":"sporks.PackedSpork.PackedObject","fun":"sporks.Predicate$"},PackedClass(sporks.ReadWriters$PackedObjectRW_T))"
-val unpickled = read[PackedSpork[Int => Boolean]](pickled)
+val pickled   = write(filter) // "PackedWithEnv(PackedObject(sporks.Filter$),{"$type":"sporks.Packed.PackedObject","fun":"sporks.Predicate$"},PackedClass(sporks.ReadWriters$PackedObjectRW_T))"
+val unpickled = read[Spork[Int => Boolean]](pickled)
 val fun       = unpickled.unwrap()
 fun(11) // true
 fun(9) // false
@@ -91,10 +91,10 @@ fun(9) // false
 Lambdas from the Spork factory are the most convenient way to create sporks.
 However, they are only supported on the JVM.
 ```scala
-val predicate = SporkBuilder.apply[Int => Boolean]({ x => x > 10 })
+val predicate = Spork.apply[Int => Boolean]({ x => x > 10 })
 val filter =
-  SporkBuilder.apply[
-    PackedSpork[Int => Boolean] => Int => Boolean
+  Spork.apply[
+    Spork[Int => Boolean] => Int => Boolean
   ]({ env => x =>
     env.unwrap().apply(x)
   })
@@ -112,13 +112,13 @@ constant.unwrap() // 42
 ```
 
 The SporkClassBuilder builder is useful for leveraging type parameters on JS and Native (where spork lambdas are not supported), or for creating spork combinators (see an example below for packing environment variables).
-However, use the SporkObjectBuilder instead if you can.
+However, use the SporkBuilder instead if you can.
 
 You can find more examples in the [sporks-example](sporks-example) directory.
 
 ## Packing Environment Variables
 
-Packing an environment variable of type `T` requires that a `PackedSpork[ReadWriter[T]]` is available in the contextual scope.
+Packing an environment variable of type `T` requires that a `Spork[ReadWriter[T]]` is available in the contextual scope.
 This way, the environment variable is packed together with a serialized/pickled serializer/pickler for its type.
 The most common packed picklers are already available and can be imported by `import sporks.given`.
 You can also create your own packed picklers, examples of this are in [sporks-root/shared/src/main/scala/sporks/package.scala](sporks-root/shared/src/main/scala/sporks/package.scala).
@@ -128,10 +128,10 @@ You can also create your own packed picklers, examples of this are in [sporks-ro
 Sporks3 leverages the Scala 3 macro system to make the serialization/pickling process as safe as possible.
 It does so by the following principles (c.f. [[Miller, Haller, and Odersky 2014]](https://link.springer.com/chapter/10.1007/978-3-662-44202-9_13), [[Haller 2022]](https://dl.acm.org/doi/10.1145/3550198.3550428)).
 
-**SporkObjectBuilder.**
-Compile time checks ensure that any `SporkObjectBuilder` is a top-level object, therefore satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements.
+**SporkBuilder.**
+Compile time checks ensure that any `SporkBuilder` is a top-level object, therefore satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements.
 Thus, invoking the `pack` and `unwrap` methods are guaranteed to not cause a runtime error.
-Further, as a `SporkObjectBuilder` is a top-level object, it can only access other top-level singleton objects.
+Further, as a `SporkBuilder` is a top-level object, it can only access other top-level singleton objects.
 
 **SporkClassBuilder.**
 Compile time checks ensure that any `SporkClassBuilder` is concrete; has a public constructor; and is a not a local class, e.g. nested inside a method, thus satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements
