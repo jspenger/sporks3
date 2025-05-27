@@ -29,7 +29,7 @@ class SporkLambdaErrorTests:
       .contains:
         """
         Invalid capture of variable `y`. Use the first parameter of a spork's body to refer to the spork's environment.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -39,7 +39,7 @@ class SporkLambdaErrorTests:
       .contains:
         """
         Invalid capture of variable `x`. Use the first parameter of a spork's body to refer to the spork's environment.
-        """.strip()
+        """.trim()
 
   @Test
   def testInvalidCaptureMethodParameter(): Unit =
@@ -51,7 +51,7 @@ class SporkLambdaErrorTests:
       .contains:
         """
         Invalid capture of variable `x`. Use the first parameter of a spork's body to refer to the spork's environment.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -62,7 +62,7 @@ class SporkLambdaErrorTests:
       .contains:
         """
         Invalid capture of variable `x`. Use the first parameter of a spork's body to refer to the spork's environment.
-        """.strip()
+        """.trim()
 
   val captureMeIfYouCan = 12
 
@@ -79,7 +79,7 @@ class SporkLambdaErrorTests:
       .contains:
         """
         Invalid capture of `this` from outer class.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -92,7 +92,7 @@ class SporkLambdaErrorTests:
       .contains:
         """
         Invalid capture of `this` from class Outer.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -102,4 +102,4 @@ class SporkLambdaErrorTests:
       .contains:
         """
         Invalid capture of `this` from class SporkLambdaErrorTests.
-        """.strip()
+        """.trim()

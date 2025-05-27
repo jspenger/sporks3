@@ -45,7 +45,7 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.NotClzClz$` is not a class.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -56,7 +56,7 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.NotClzClz$` is not a class.
-        """.strip()
+        """.trim()
 
   @Test
   def testSporkClassBuilderNestedInClassError(): Unit =
@@ -70,7 +70,7 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.NestedBuilderInClass.Inner` is nested in a class.
-        """.strip()
+        """.trim()
 
   @Test
   def testSporkClassBuilderNestedInMethodError(): Unit =
@@ -82,7 +82,7 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The provided SporkClassBuilder `sporks.SporkClassBuilder` is not a concrete class.
-        """.strip()
+        """.trim()
 
   @Test
   def testSporkClassBuilderWithPrivateConstructorError(): Unit =
@@ -94,7 +94,7 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithoutPublicConstructor` `<init>` does not have a public constructor.
-        """.strip()
+        """.trim()
 
   @Test
   def testSporkClassBuilderWithParameterError(): Unit =
@@ -106,7 +106,7 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The constructor of the provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithParameters` `<init>` does not have an empty parameter list.
-        """.strip()
+        """.trim()
 
   @Test
   def testSporkClassBuilderWithContextParameterError(): Unit =
@@ -129,7 +129,7 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The constructor of the provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithContext1` `<init>` contains a context parameter list.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -140,7 +140,7 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The constructor of the provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithContext2` `<init>` contains a context parameter list.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -151,4 +151,4 @@ class SporkClassBuilderErrorTests:
       .contains:
         """
         The constructor of the provided SporkClassBuilder `sporks.SporkClassBuilderErrorTests$.ClassWithContext3` `<init>` contains a context parameter list.
-        """.strip()
+        """.trim()

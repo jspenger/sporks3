@@ -34,7 +34,7 @@ class SporkBuilderErrorTests:
       .contains:
         """
         The provided SporkBuilder `sporks.SporkBuilderErrorTests$.NotObjObj` is not an object.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -45,7 +45,7 @@ class SporkBuilderErrorTests:
       .contains:
         """
         The provided SporkBuilder `sporks.SporkBuilderErrorTests$.NotObjObj` is not an object.
-        """.strip()
+        """.trim()
 
   @Test
   def testNotTopLevelError(): Unit =
@@ -58,7 +58,7 @@ class SporkBuilderErrorTests:
       .contains:
         """
         The provided SporkBuilder `sporks.SporkBuilderErrorTests$.SomeClass.NotTopLevel$` is not a top-level object; its owner `SomeClass` is not a top-level object nor a package.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -69,7 +69,7 @@ class SporkBuilderErrorTests:
       .contains:
         """
         The provided SporkBuilder `sporks.SporkBuilder` is not an object.
-        """.strip()
+        """.trim()
 
     assertTrue:
       typeCheckErrors:
@@ -81,4 +81,4 @@ class SporkBuilderErrorTests:
         _.matches:
           raw"""
           The provided SporkBuilder `.*Builder\$$` is not a top-level object; its owner `.*` is not a top-level object nor a package.
-          """.strip()
+          """.trim()
