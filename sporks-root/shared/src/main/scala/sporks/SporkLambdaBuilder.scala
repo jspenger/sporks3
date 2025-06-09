@@ -7,7 +7,7 @@ import sporks.Packed.*
 
 
 @Reflect.EnableReflectiveInstantiation
-private[sporks] trait  SporkLambdaBuilder[+T](val fun: T) {
+private[sporks] trait SporkLambdaBuilder[+T](val fun: T) {
   final inline def pack(): Spork[T] =
     ${ SporkLambdaBuilder.packMacro('this) }
 }
