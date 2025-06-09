@@ -17,31 +17,40 @@ object AutoCapture {
     import quotes.reflect.*
 
     // 1. Get all captured symbols
+    // Captures are grouped into a list of groups, where each group contains all
+    // symbols which share the same captured identifier. One environment
+    // parameter is generated for each group.
     val foundIds = Macros.findCapturedIds(fExpr.asTerm)
-    val captures = foundIds.map(_.symbol).distinct.sorted(Ordering.by(_.fullName))
+    val captures: List[List[Tree]] = foundIds.groupBy(_.symbol.fullName).toList.sortBy(_._1).map(_._2).toList
 
     // 2. Check if every capture has a ReadWriter
     val readWriters = captures.flatMap { cap =>
-      val capTpe = cap.termRef.widen
+      // I'm unsure if captures from the same group ever have different types.
+      // In the odd case they do, we can do the following instead:
+      // ((alternative: )) val capTpe = cap.map(_.symbol.termRef.widen).reduceLeft(AndType(_, _))
+      // `cap.head` is safe as `cap` groups are nonempty by construction
+      val capTpe = cap.head.symbol.termRef.widen
       val rwTpe = TypeRepr.of[[T] =>> Spork[ReadWriter[T]]].appliedTo(capTpe)
       val result = Implicits.search(rwTpe)
       result match {
         case succ: ImplicitSearchSuccess =>
           List(succ.tree.asExpr)
         case fail: ImplicitSearchFailure =>
-          report.error(fail.explanation)
+          cap.foreach { c =>
+            report.error(fail.explanation, c.pos)
+          }
           List()
       }
     }
 
-    // 3. Lift each captured symbol, one at a time
-    def liftSymbol(owner: Symbol, sym: Symbol, body: Term): Term = {
-      val mtpe = MethodType(List(sym.name))(_ => List(sym.termRef), _ => body.tpe)
+    // 3. Lift each group of captured symbols, one group at a time
+    def liftSymbolGroup(owner: Symbol, sym: List[Symbol], body: Term): Term = {
+      val mtpe = MethodType(List(sym.head.name))(_ => List(sym.head.termRef), _ => body.tpe)
       Lambda(
         owner,
         mtpe,
         { case (methSym, List(arg1: Term)) =>
-            val subst = Map(sym -> arg1)
+            val subst = sym.map(s => (s -> arg1)).toMap
             val treeMap = new TreeMap {
               override def transformTerm(t: Term)(o: Symbol): Term = t match {
                 case id: Ident =>
@@ -56,17 +65,17 @@ object AutoCapture {
       )
     }
 
-    def liftAllSymbols(owner: Symbol, syms: List[Symbol], body: Term): Term = {
+    def liftAllSymbolGroups(owner: Symbol, syms: List[List[Tree]], body: Term): Term = {
       var newBody = body
       var newOwner = owner
       for (sym <- syms) do {
-        newBody = liftSymbol(newOwner, sym, newBody)
+        newBody = liftSymbolGroup(newOwner, sym.map(_.symbol), newBody)
         newOwner = newBody.symbol
       }
       newBody
     }
 
-    val lifted = liftAllSymbols(Symbol.spliceOwner, captures.reverse, fExpr.asTerm)
+    val lifted = liftAllSymbolGroups(Symbol.spliceOwner, captures.reverse, fExpr.asTerm)
 
     // 4. Pack the new lifted function...
     val packed: Expr[Spork[Any]] = '{
@@ -80,7 +89,7 @@ object AutoCapture {
     // ... and pack it with the captures and readWriters
     var tmp = packed
     for ((cap, rw) <- captures zip readWriters) do {
-      val env: Expr[Any] = Ref(cap).asExpr
+      val env: Expr[Any] = Ref(cap.head.symbol).asExpr
       tmp = '{
         $tmp
           .asInstanceOf[Spork[Any => Any]]

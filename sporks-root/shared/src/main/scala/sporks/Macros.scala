@@ -3,26 +3,56 @@ package sporks
 import scala.quoted.*
 
 private[sporks] object Macros {
-  
+
   private[sporks] def findCapturedIds(using Quotes)(tree: quotes.reflect.Term): List[quotes.reflect.Tree] = {
     import quotes.reflect.*
 
-    def findCaptures(defdefSym: Symbol, anonfunBody: Tree): List[Tree] = {
+    def findMaybeOwners(tree: Tree): List[Symbol] = {
+      // Collect all symbols which are maybeOwners of other symbols in the tree.
+      // This includes:
+      // - ValDef
+      // - DefDef
+      // - ClassDef
+      // - TypeDef
+
+      val acc = new TreeAccumulator[List[Symbol]] {
+        def foldTree(owners: List[Symbol], tree: Tree)(owner: Symbol): List[Symbol] = tree match {
+          case x @ ValDef(_, _, _) =>
+            foldOverTree(x.symbol :: owners, tree)(owner)
+          case x @ DefDef(_, _, _, _) =>
+            foldOverTree(x.symbol :: owners, tree)(owner)
+          case x @ ClassDef(_, _, _, _, _) =>
+            foldOverTree(x.symbol :: owners, tree)(owner)
+          case x @ TypeDef(_, _) =>
+            foldOverTree(x.symbol :: owners, tree)(owner)
+          case _ =>
+            foldOverTree(owners, tree)(owner)
+        }
+      }
+      acc.foldTree(List(), tree)(tree.symbol)
+    }
+
+    def findCaptures(anonfunBody: Tree): List[Tree] = {
 
       def ownerChainContains(sym: Symbol, transitiveOwner: Symbol): Boolean = {
-        if (sym.maybeOwner.isNoSymbol) false else ((sym.owner == transitiveOwner) || ownerChainContains(sym.owner, transitiveOwner))
+        if (sym.maybeOwner.isNoSymbol) false else ((sym.maybeOwner == transitiveOwner) || ownerChainContains(sym.maybeOwner, transitiveOwner))
       }
 
       def symIsToplevelObject(sym: Symbol): Boolean = {
-        sym.isNoSymbol || ((sym.flags.is(Flags.Module) || sym.flags.is(Flags.Package)) && symIsToplevelObject(sym.owner))
+        sym.isNoSymbol || ((sym.flags.is(Flags.Module) || sym.flags.is(Flags.Package)) && symIsToplevelObject(sym.maybeOwner))
       }
 
       def isOwnedByToplevelObject(sym: Symbol): Boolean = {
-        symIsToplevelObject(sym) || (!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.owner)
+        symIsToplevelObject(sym) || (!sym.maybeOwner.isNoSymbol) && symIsToplevelObject(sym.maybeOwner)
       }
 
+      // A symbol is owned by the spore if:
+      // - it is owned by one of the maybeOwners of the spore
+      // - it is a one of the maybeOwners of the spore
+
+      val maybeOwners = findMaybeOwners(anonfunBody)
       def isOwnedBySpore(sym: Symbol): Boolean = {
-        ownerChainContains(sym, defdefSym)
+        maybeOwners.exists(ownerChainContains(sym, _)) || maybeOwners.contains(sym)
       }
 
       def isThis(tree: Tree): Boolean = {
@@ -32,44 +62,39 @@ private[sporks] object Macros {
         }
       }
 
+      // Collect all identifiers which *could* be captured by the closure. This
+      // will also collect identifiers which are not captured by the closure
+      // such as identifiers owned by toplevel objects, etc. These are later
+      // filtered out.
+      // This includes:
+      // - Ident
+      // - This
+      // - TypeIdent
+
       val acc = new TreeAccumulator[List[Tree]] {
         def foldTree(ids: List[Tree], tree: Tree)(owner: Symbol): List[Tree] = tree match {
-          case id @ Ident(_) if !id.symbol.isType => id :: ids
-          case thiz @ This(_) => thiz :: ids
-          case _ => try {
+          case x @ Ident(_) if !x.symbol.isType =>
+            x :: ids
+          case x @ This(_) =>
+            x :: ids
+          case New(x @ TypeIdent(_)) =>
+            x :: ids
+          case _ =>
             foldOverTree(ids, tree)(owner)
-          } catch {
-            case me: MatchError => {
-              // compiler bug: skip checking tree
-              ids
-            }
-          }
         }
       }
-      val foundIds = acc.foldTree(List(), anonfunBody)(defdefSym)
+
+      val foundIds = acc.foldTree(List(), anonfunBody)(anonfunBody.symbol.maybeOwner)
+
+      // Filter out identifiers which are either:
+      // - owned by a toplevel symbol or are a toplevel symbol
+      // - owned by the spore
       foundIds
         .filter(tree => isThis(tree) || !isOwnedByToplevelObject(tree.symbol))
-        .filter(tree => isThis(tree) || !isOwnedBySpore(tree.symbol))
+        .filter(tree => !isOwnedBySpore(tree.symbol))
     }
 
-    def findCapturesTree(tree: Term): List[Tree] = {
-      tree match {
-        case Inlined(_, _, TypeApply(Select(Block(_, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _)), _), _)) =>
-          findCaptures(defdef.symbol, anonfunBody)
-        case Inlined(_, _, TypeApply(Select(Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _), _), _)) =>
-          findCaptures(defdef.symbol, anonfunBody)
-        case Inlined(_, _, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _)) =>
-          findCaptures(defdef.symbol, anonfunBody)
-        case Inlined(_, _, Block(_, Block(List(defdef @ DefDef(_, _, _, Some(anonfunBody))), _))) =>
-          findCaptures(defdef.symbol, anonfunBody)
-        case Inlined(_, _, nested@ Inlined(_, _, _)) =>
-          findCapturesTree(nested)
-        case _ =>
-          findCaptures(tree.symbol, tree)
-      }
-    }
-
-    findCapturesTree(tree)
+    findCaptures(tree)
   }
 
 
@@ -107,7 +132,7 @@ private[sporks] object Macros {
     }
 
     def allOwnersOK(owner: Symbol): Boolean = {
-      owner.isNoSymbol || ((owner.flags.is(Flags.Module) || owner.flags.is(Flags.Package)) && allOwnersOK(owner.owner))
+      owner.isNoSymbol || ((owner.flags.is(Flags.Module) || owner.flags.is(Flags.Package)) && allOwnersOK(owner.maybeOwner))
     }
 
     val tree = builderExpr.asTerm
@@ -156,11 +181,11 @@ private[sporks] object Macros {
     }
 
     def isNotLocal(owner: Symbol): Boolean = {
-      owner.isNoSymbol || (!owner.flags.is(Flags.Method) && isNotLocal(owner.owner))
+      owner.isNoSymbol || (!owner.flags.is(Flags.Method) && isNotLocal(owner.maybeOwner))
     }
 
     def isNotNestedInClass(owner: Symbol): Boolean = {
-      owner.isNoSymbol || (!(owner.isClassDef && !owner.flags.is(Flags.Module)) && isNotNestedInClass(owner.owner))
+      owner.isNoSymbol || (!(owner.isClassDef && !owner.flags.is(Flags.Module)) && isNotNestedInClass(owner.maybeOwner))
     }
 
     def containsEmptyParamList(sym: Symbol): Boolean = {

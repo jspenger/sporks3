@@ -44,7 +44,7 @@ object AutoCaptureExample {
   // numbers `x` and `y`.
   def isBetween(x: Int, y: Int): Spork[Int => Boolean] = {
     AutoCapture.apply { (i: Int) => x <= i && i < y }
-    // // optionally, we can use the `auto` shorthand method:
+    // // optionally, we can use the `spauto` shorthand method:
     // spauto{ (i: Int) => x <= i && i < y }
   }
 
