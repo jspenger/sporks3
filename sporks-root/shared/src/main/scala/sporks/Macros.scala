@@ -71,14 +71,37 @@ private[sporks] object Macros {
       // - This
       // - TypeIdent
 
+      def outermostAppliedTypeIdent(tree: Tree): Option[Tree] = {
+        tree match {
+          case x @ TypeIdent(_) => Some(x)
+          case Applied(x @ _, _) => outermostAppliedTypeIdent(x)
+          case _ => None
+        }
+      }
+
       val acc = new TreeAccumulator[List[Tree]] {
         def foldTree(ids: List[Tree], tree: Tree)(owner: Symbol): List[Tree] = tree match {
           case x @ Ident(_) if !x.symbol.isType =>
             x :: ids
           case x @ This(_) =>
             x :: ids
-          case New(x @ TypeIdent(_)) =>
-            x :: ids
+          // `TypeIdent`s are tricky... we want to find any occurrence of a
+          // TypeIdent `T` in either of these cases: 
+          // - `new T`
+          // - `new T[U]`
+          // - `class C extends T with ...`
+          // - `class C extends T[U] with ...`
+          // - `class C extends ... with T`
+          // - `class C extends ... with T[U]`
+          case ClassDef(_, _, parents, _, _) =>
+            // Parents are either `TypeTree`s or `Term` containing `New`.
+            // Here we collect all `TypeIdent`s from `TypeTree`s. 
+            // The `folderOverTree` call collects the `TypeIdent`s from `New`.
+            parents.flatMap { outermostAppliedTypeIdent(_) }
+            ::: foldOverTree(ids, tree)(owner)
+          case New(x) =>
+            outermostAppliedTypeIdent(x).toList
+            ::: foldOverTree(ids, tree)(owner)
           case _ =>
             foldOverTree(ids, tree)(owner)
         }

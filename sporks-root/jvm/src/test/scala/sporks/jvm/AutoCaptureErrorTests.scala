@@ -241,6 +241,25 @@ class AutoCaptureErrorTests {
   }
 
   @Test
+  def testCapturedIdentInClassError(): Unit = {
+    assertTrue:
+      typeCheckErrors:
+        """
+        val foo = Foo(12, 13)
+        spauto {
+          class Bar {
+            def bar = foo.x + 12
+          }
+        }.unwrap()
+        """
+      .exists:
+        _.matches:
+          raw"""
+          (?s)no implicit values were found that match type sporks.Spork\[.*\]
+          """.trim()
+  }
+
+  @Test
   def testCapturedNewClassError(): Unit = {
     assertTrue:
       typeCheckErrors:
@@ -249,6 +268,136 @@ class AutoCaptureErrorTests {
         spauto { (x: Int) =>
           new Bar(12, 14)
         }
+        """
+      .exists:
+        _.matches:
+          raw"""
+          (?s)no implicit values were found that match type sporks.Spork\[.*\]
+          """.trim()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+        class Bar[T](x: T, y: T)
+        spauto { (x: Int) =>
+          new Bar[Int](12, 14)
+        }
+        """
+      .exists:
+        _.matches:
+          raw"""
+          (?s)no implicit values were found that match type sporks.Spork\[.*\]
+          """.trim()
+  }
+
+  @Test
+  def testCapturedClassExtendsError(): Unit = {
+    assertTrue:
+      typeCheckErrors:
+        """
+          class Bar0
+          spauto {
+            class FooBar extends Bar0
+          }.unwrap()
+          """
+      .exists:
+        _.matches:
+          raw"""(?s)no implicit values were found that match type sporks.Spork\[.*\]"""
+            .trim()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+          class Bar1(x: Int, y: Int)
+          spauto {
+            class FooBar extends Bar1(12, 13)
+          }
+          """
+      .exists:
+        _.matches:
+          raw"""(?s)no implicit values were found that match type sporks.Spork\[.*\]"""
+            .trim()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+          class Bar2[T](x: T, y: T)
+          spauto {
+            class FooBar extends Bar2[Int](12, 13)
+          }.unwrap()
+          """
+      .exists:
+        _.matches:
+          raw"""(?s)no implicit values were found that match type sporks.Spork\[.*\]"""
+            .trim()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+          val x = 12
+          trait Bar3 { def bar: Int = x }
+          spauto {
+            class FooBar extends Foo(12, 13) with Bar3
+          }
+          """
+      .exists:
+        _.matches:
+          raw"""(?s)no implicit values were found that match type sporks.Spork\[.*\]"""
+            .trim()
+
+    assertTrue:
+      typeCheckErrors:
+        """
+          trait Bar4[T] { def bar: Int = x }
+          spauto {
+            class FooBar extends Foo(12, 13) with Bar4[Int]
+          }.unwrap()
+          """
+      .exists:
+        _.matches:
+          raw"""(?s)no implicit values were found that match type sporks.Spork\[.*\]"""
+            .trim()
+  }
+
+  @Test
+  def testCapturedTraitExtendsError(): Unit = {
+    assertTrue:
+      typeCheckErrors:
+        """
+        trait Bar
+        spauto {
+          trait FooBar extends Bar
+        }.unwrap()
+        """
+      .exists:
+        _.matches:
+          raw"""(?s)no implicit values were found that match type sporks.Spork\[.*\]"""
+            .trim()
+  }
+
+  @Test
+  def testObjectExtendsCapturedError(): Unit = {
+    assertTrue:
+      typeCheckErrors:
+        """
+        trait Bar
+        spauto {
+          object FooBar extends Bar
+        }.unwrap()
+        """
+      .exists:
+        _.matches:
+          raw"""(?s)no implicit values were found that match type sporks.Spork\[.*\]"""
+            .trim()
+  }
+
+  @Test
+  def testCapturedEnumError(): Unit = {
+    assertTrue:
+      typeCheckErrors:
+        """
+        enum Bar { case Baz }
+        spauto { Bar.Baz }
         """
       .exists:
         _.matches:
