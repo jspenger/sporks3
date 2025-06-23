@@ -407,6 +407,25 @@ class AutoCaptureErrorTests {
   }
 
   @Test
+  def testCapturedUnapplyError(): Unit = {
+    assertTrue:
+      typeCheckErrors:
+        """
+        sealed trait Bar
+        case class Baz(x: Int, y: Int) extends Bar
+        spauto { (x: Bar) => x match {
+            case Baz(a, b) => a + b
+          }
+        }
+        """
+      .exists:
+        _.matches:
+          raw"""
+          (?s)no implicit values were found that match type sporks.Spork\[.*\]
+          """.trim()
+  }
+
+  @Test
   def testCapturedThisSuperError(): Unit = {
     assertTrue:
       typeCheckErrors:
