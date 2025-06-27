@@ -302,7 +302,6 @@ class AutoCaptureErrorTests {
           """
       .exists:
         _.matches:
-        // _.matches:
           raw"""
           (?s)Missing implicit for captured variable `Bar0`\.\R\Rno implicit values were found that match type sporks.Spork\[\s*upickle.default.ReadWriter\[.*\]\]\s*
           """.trim()
