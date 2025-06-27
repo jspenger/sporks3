@@ -37,7 +37,9 @@ object AutoCapture {
           List(succ.tree.asExpr)
         case fail: ImplicitSearchFailure =>
           cap.foreach { c =>
-            report.error(fail.explanation, c.pos)
+            // Do not use `rwTpe.show` here as it throws a MatchError on Scala 3.4.3 for some cases
+            val msg = s"Missing implicit for captured variable `${c.symbol.name}`.\n\n" + fail.explanation
+            report.error(msg, c.pos)
           }
           List()
       }
