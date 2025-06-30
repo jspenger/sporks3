@@ -7,8 +7,43 @@ import sporks.*
 import sporks.given
 
 
+/** A factory for creating Sporks that are safe to serialize and deserialize.
+  * Automatically captures variables and checks captured variables.
+  *
+  * Automatically capturing a variable requires an implicit
+  * `Spork[ReadWriter[T]]` in scope, where `T` is the type of the captured
+  * variable.
+  *
+  * Note: This Spork factory only works on the JVM. Use the
+  * [[sporks.SporkBuilder]] or [[sporks.SporkClassBuilder]] if ScalaJS or
+  * ScalaNative support is needed.
+  */
 object AutoCapture {
 
+  /** Create a Spork from `f`. Captured variables in `f` must have an implicit
+    * `Spork[ReadWriter[T]]` in scope, where `T` is the type of the captured
+    * variable.
+    *
+    * The created Spork is safe to serialize and deserialize. If a captured
+    * variable does not have an implicit `Spork[ReadWriter[T]]` in scope then it
+    * will cause a compiler error.
+    *
+    * @example
+    *   {{{
+    * def isBetween(x: Int , y: Int): Spork[Int => Boolean] = {
+    *   // `x` and `y` are captured variables of type `Int`, so we need to
+    *   // provide an implicit `Spork[ReadWriter[Int]]` in scope.
+    *   AutoCapture.apply { (i: Int) => x <= i && i < y }
+    * }
+    *   }}}
+    *
+    * @param f
+    *   The closure.
+    * @tparam F
+    *   The type of the closure.
+    * @return
+    *   A new `Spork[F]` with the packed closure `f`.
+    */
   inline def apply[F](inline f: F): Spork[F] = {
     ${ liftImpl[F]('f) }
   }

@@ -6,6 +6,17 @@ import sporks.*
 import sporks.Packed.*
 
 
+/** A collection of ReadWriters. Contains both `ReadWriter[Spork[T]]` and
+  * `Spork[ReadWriter[T]]` for various `T`.
+  *
+  * Use `ReadWriter[Spork[T]]` to serialize and deserialize Sporks. For example,
+  * by using the `upickle.default.write` and `upickle.default.read` methods
+  * applied to a `Spork[T]`.
+  *
+  * Use `Spork[ReadWriter[T]]` when packing a value of type `T` into a Spork.
+  * For example, by using the `withEnv` and `withCtx` methods of a `Spork[T =>
+  * R]` or `Spork[T ?=> R]`.
+  */
 object ReadWriters {
 
   //////////////////////////////////////////////////////////////////////////////
