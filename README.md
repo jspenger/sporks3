@@ -1,10 +1,9 @@
 # Sporks3
 
-Simple and safe serialization/pickling library for closures in Scala 3.
+Simple and safe serialization/pickling library for functions/closures in Scala 3.
 
 This is an experimental fork of the "Spores3" project created by Philipp Haller ([https://github.com/phaller/spores3](https://github.com/phaller/spores3)), which in turn is a continuation of the work on "Spores" by Heather Miller and Philipp Haller.
 This fork is heavily modified to fit another project that uses Sporks3 for serialization of closures.
-As such, it is not yet intended for general use, and will likely change significantly over the next few months.
 
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="./sporky2.png">
@@ -14,37 +13,79 @@ As such, it is not yet intended for general use, and will likely change signific
 
 ## Project Overview
 
-Pickle and unpickle your closures.
-There are three ways in which you can create a spork: 
-- as an object, extending the `SporkBuilder` trait
-- as a class, extending the `SporkClassBuilder` trait
-- or, as a lambda, using the `Spork.apply` lambda factory (JVM only)
+Sporks make it safe to create, serialize, deserialize, and unwrap *closures*.
+Any issues with your code that would break this promise will cause a compiler error, it is guaranteed to not throw runtime errors.
 
-Using any of these three methods, you can create a `Spork` object, by calling the `pack` method on a SporkBuilder or SporkClassBuilder object, or by using the lambda factory directly.
+Using Sporks will prevent you from creating closures which are not serializable.
 ```scala
-SporkBuilder[T](fun: T) -- pack() --> Spork[T]
-SporkClassBuilder [T](fun: T) -- pack() --> Spork[T]
-Spork.apply[T](fun: T) ------------> Spork[T]
+class Foo {
+  val y = 42
+  val fun = Spork.apply{ (x: Int) => { x + y } }
+  //                                       ^
+  // Error: Invalid capture of `this` from class Foo.
+}
 ```
 
-A Spork can be used to `unwrap` the closure. 
+Writing the same program using Java's own serialization will compile but throw a `NotSerializableException` at runtime when serializing an instance of `fun`, as `this.y` is captured and `this` is not `Serializable`.
+
+We can create a `Spork[Int => Int]` which safely captures `y` in four ways.
+
+Option 1: Passing `y` as an explicit environment variable with the Spork factory. (JVM only)
 ```scala
-Spork[T] -- unwrap() --> T
+val fun1 = Spork.apply({ (y: Int) => (x: Int) => { x + y } }).withEnv(y)
+val fun2 = Spork.applyWithEnv(y) { (y: Int) => (x: Int) => { x + y } }
+val fun3 = Spork.applyWithCtx(y) { (y: Int) ?=> (x: Int) => { x + y } }
 ```
 
-Additionally, a Spork can be partially applied to a serializable `env`ironment variable, using either the `withEnv` or the `withCtx` methods.
+Option 2: Automatically checking and capturing environment variables. This requires an implicit `Spork[ReadWriter[T]]` in scope, where `T` is the type of the captured variable. (JVM only)
 ```scala
-Spork[E  => T] -- withEnv(env: E)(using Spork[ReadWriter[E]]) --> Spork[T]
-Spork[E ?=> T] -- withCtx(env: E)(using Spork[ReadWriter[E]]) --> Spork[T]
+val fun4 = AutoCapture.apply{ (x: Int) => { x + y } }
+````
+
+Option 3: Using a `SporkBuilder`, by extending the `SporkBuilder` trait from a top-level object. (JVM, ScalaJS, ScalaNative)
+```scala
+object MyFun5 extends SporkBuilder[Int => Int => Int]({ y => x => x + y })
+...
+val fun5 = MyFun5.pack().withEnv(y)
 ```
 
+Option 4: Using a `SporkClassBuilder`, by extending the `SporkClassBuilder` trait from a top-level class. (JVM, ScalaJS, ScalaNative)
+```scala
+class MyFun6[T] extends SporkClassBuilder[T => T => Int]({ y => x => x.toString().length() + y.toString().length() })
+...
+val fun6 = new MyFun6[Int]().pack().withEnv(y)
+```
+
+All examples above will create a `Spork[Int => Int]`.
+The easiest way to serialize and deserialize a Spork is to use the upickle library.
+```scala
+val serialized: String = upickle.default.write(fun1)
+val deserialized: Spork[Int => Int] = upickle.default.read[Spork[Int => Int]](serialized)
+```
+
+Use the `unwrap` method to unwrap the wrapped closure in a Spork.
+```scala
+val unwrapped: Int => Int = deserialized.unwrap()
+```
+
+Partially apply a Spork to an environment variable using the `withEnv` or `withCtx` methods.
 It can also be partially applied directly to a Spork using the `withEnv2` or `withCtx2` methods.
 ```scala
-Spork[E  => T] -- withEnv2(env: Spork[E]) --> Spork[T]
-Spork[E ?=> T] -- withCtx2(env: Spork[E]) --> Spork[T]
+val fun7 = Spork.apply[Int ?=> Int => Int] { x ?=> y => x + y }
+val fun7WithCtx = fun7.withCtx(42)
+val fun7WithCtxWithEnv = fun7WithCtx.withEnv(23)
+fun7WithCtxWithEnv.unwrap() //65
 ```
 
-## Example
+## Packing Environment Variables
+
+The `withEnv` and `withCtx` methods, as well as the `AutoCapture` factory, pack environment variables into the Spork.
+Packing an environment variable of type `T` requires that a `Spork[ReadWriter[T]]` is available in the contextual scope.
+This way, the environment variable is packed together with a serialized/pickled serializer/pickler for its type.
+The most common packed picklers are already available and can be imported by `import sporks.given`.
+You can also create your own packed picklers, examples of this are in [sporks-root/shared/src/main/scala/sporks/ReadWriters.scala](sporks-root/shared/src/main/scala/sporks/ReadWriters.scala).
+
+## Examples
 
 Import sporks3 into your project.
 
@@ -111,38 +152,4 @@ val constant = new Constant[Int]().pack().withEnv(42)
 constant.unwrap() // 42
 ```
 
-The SporkClassBuilder builder is useful for leveraging type parameters on JS and Native (where spork lambdas are not supported), or for creating spork combinators (see an example below for packing environment variables).
-However, use the SporkBuilder instead if you can.
-
 You can find more examples in the [sporks-example](sporks-example) directory.
-
-## Packing Environment Variables
-
-Packing an environment variable of type `T` requires that a `Spork[ReadWriter[T]]` is available in the contextual scope.
-This way, the environment variable is packed together with a serialized/pickled serializer/pickler for its type.
-The most common packed picklers are already available and can be imported by `import sporks.given`.
-You can also create your own packed picklers, examples of this are in [sporks-root/shared/src/main/scala/sporks/package.scala](sporks-root/shared/src/main/scala/sporks/package.scala).
-
-## Compile Time Checks
-
-Sporks3 leverages the Scala 3 macro system to make the serialization/pickling process as safe as possible.
-It does so by the following principles (c.f. [[Miller, Haller, and Odersky 2014]](https://link.springer.com/chapter/10.1007/978-3-662-44202-9_13), [[Haller 2022]](https://dl.acm.org/doi/10.1145/3550198.3550428)).
-
-**SporkBuilder.**
-Compile time checks ensure that any `SporkBuilder` is a top-level object, therefore satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements.
-Thus, invoking the `pack` and `unwrap` methods are guaranteed to not cause a runtime error.
-Further, as a `SporkBuilder` is a top-level object, it can only access other top-level singleton objects.
-
-**SporkClassBuilder.**
-Compile time checks ensure that any `SporkClassBuilder` is concrete; has a public constructor; and is a not a local class, e.g. nested inside a method, thus satisfying the [portable-scala-reflect](https://github.com/portable-scala/portable-scala-reflect) requirements
-Furthermore, checks ensure that a `SporkClassBuilder` cannot be nested inside another class, i.e., it must be a top-level class.
-Last, a final check ensures that a `SporkClassBuilder`'s constructor has an empty parameter list, this is an internal requirement of the implementation.
-This way, invoking the `pack` and `unwrap` methods are guaranteed to not cause a runtime error.
-
-**Spork Lambda.**
-A compile time check ensures that the body of the lambda only accesses its own parameters and other top-level object singletons.
-By this mechanism, it is guaranteed to not cause a runtime error to invoke `pack` and `unwrap` methods on it.
-
-## Roadmap
-- Add the `Duplicable` trait from Spores3, together with weaker and stronger sporks.
-- Remove the direct dependency on upickle, make it work with any type-class-based serialization library.
