@@ -41,3 +41,8 @@ jobs:
           make build
           make test
           make test-example
+      - name: Root cross build and test
+        run: |
+          make cross-build
+          make cross-test
+          make cross-test-example

@@ -259,7 +259,7 @@ class AutoCaptureTests {
       .apply(C20).apply(C21).apply(C22).apply(C23).apply(C24).apply(C25).apply(C26).apply(C27).apply(C28).apply(C29)
       .apply(C30).apply(C31).apply(C32).apply(C33).apply(C34).apply(C35).apply(C36).apply(C37).apply(C38).apply(C39)
       .apply(C40).apply(C41).apply(C42).apply(C43).apply(C44).apply(C45).apply(C46).apply(C47).apply(C48).apply(C49)
-    val expected = Range(0, 10).sum() * 5 * 2
+    val expected = 450 // (0 + 1 + ... + 9) * 5 * 2
     assertEquals(expected, actual)
   }
 }
