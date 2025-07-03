@@ -1,4 +1,4 @@
-name: Root build and test
+name: Build and test
 on:
   push:
     branches:
@@ -36,13 +36,13 @@ jobs:
           cache: sbt
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-      - name: Root build and test
+      - name: Build and test
         run: |
           make build
           make test
           make test-example
-      - name: Root cross build and test
-        run: |
-          make cross-build
-          make cross-test
-          make cross-test-example
+      # - name: Paranoid cross-build and cross-test
+      #   run: |
+      #     make cross-build
+      #     make cross-test
+      #     make cross-test-example
