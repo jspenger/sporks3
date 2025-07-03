@@ -42,12 +42,13 @@ sandbox:
 VERSIONS = 3.3.6 \
 	3.4.3 \
 	3.5.2 \
-	3.6.4
+	3.6.4 \
+	3.7.1
 
 .PHONY: cross-build
 
 cross-build:
-	set -e -x -o pipefail; \
+	/usr/bin/env bash -e -x -o pipefail -c; \
 	for version in $(VERSIONS); do \
 		sbt -Dsbt.server=false ++$${version}! -v compile; \
 		sbt -Dsbt.server=false ++$${version}! -v test:compile; \
@@ -56,14 +57,14 @@ cross-build:
 .PHONY: cross-test
 
 cross-test:
-	set -e -x -o pipefail; \
+	/usr/bin/env bash -e -x -o pipefail -c; \
 	for version in $(VERSIONS); do \
 		sbt -Dsbt.server=false ++$${version}! -v test; \
 	done
 
 .PHONY: cross-test-example
 cross-test-example:
-	set -e -x -o pipefail; \
+	/usr/bin/env bash -e -x -o pipefail -c; \
 	for version in $(VERSIONS); do \
 		sbt -Dsbt.server=false ++$${version}! -v "exampleJVM / runMain sporks.example.Example"; \
 		sbt -Dsbt.server=false ++$${version}! -v "exampleJVM / runMain sporks.example.LambdaExample"; \
@@ -84,12 +85,12 @@ JVM_VERSIONS = 8.0.452-zulu 11.0.27-tem 17.0.15-tem 21.0.7-tem
 .PHONY: paranoid
 
 paranoid:
-	set -e -x -o pipefail; \
+	/usr/bin/env bash -e -x -o pipefail -c; \
 	for jvm in $(JVM_VERSIONS); do \
 		echo "Testing with JAVA_HOME for JDK $${jvm}"; \
 		. "$$HOME/.sdkman/bin/sdkman-init.sh"; \
 		sdk use java $${jvm}; \
-		set -e -x -o pipefail; \
+		/usr/bin/env bash -e -x -o pipefail -c; \
 		java -version; \
 		$(MAKE) clean; \
 		$(MAKE) cross-sandbox; \
