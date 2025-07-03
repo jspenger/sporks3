@@ -49,7 +49,8 @@ VERSIONS = 3.3.6 \
 cross-build:
 	set -e -x -o pipefail; \
 	for version in $(VERSIONS); do \
-		sbt -Dsbt.server=false ++$${version}! -v compile && sbt -Dsbt.server=false ++$${version}! -v test:compile; \
+		sbt -Dsbt.server=false ++$${version}! -v compile; \
+		sbt -Dsbt.server=false ++$${version}! -v test:compile; \
 	done
 
 .PHONY: cross-test
