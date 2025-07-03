@@ -94,7 +94,7 @@ private[sporks] object Macros {
           // - `class C extends ... with T`
           // - `class C extends ... with T[U]`
           case ClassDef(_, _, parents, _, _) =>
-            // Parents are either `TypeTree`s or `Term` containing `New`.
+            // `parents`` are either `TypeTree`s or `Term` containing `New`.
             // Here we collect all `TypeIdent`s from `TypeTree`s. 
             // The `folderOverTree` call collects the `TypeIdent`s from `New`.
             parents.flatMap { outermostAppliedTypeIdent(_) }

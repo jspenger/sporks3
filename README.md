@@ -104,13 +104,13 @@ object Predicate
 
 object Filter
     extends SporkBuilder[
-      Spork[Int => Boolean] => Int => Boolean
+      (Int => Boolean) => Int => Boolean
     ]({ env => x =>
-      env.unwrap().apply(x)
+      env.apply(x)
     })
 
 val predicate = Predicate.pack()
-val filter    = Filter.pack().withEnv(predicate)
+val filter    = Filter.pack().withEnv2(predicate)
 val fun       = filter.unwrap()
 fun(11) // true
 fun(9) // false
@@ -121,8 +121,8 @@ Sporks can be serialized/pickled and deserialized/unpickled by using the upickle
 import upickle.default.* // imports: read, write, etc.
 
 // ...
-val filter    = Filter.pack().withEnv(predicate)
-val pickled   = write(filter) // "PackedWithEnv(PackedObject(sporks.Filter$),{"$type":"sporks.Packed.PackedObject","fun":"sporks.Predicate$"},PackedClass(sporks.ReadWriters$PackedObjectRW_T))"
+val filter    = Filter.pack().withEnv2(predicate)
+val pickled   = write(filter) // {"$type":"sporks.Packed.PackedWithEnv","packed":{"$type":"sporks.Packed.PackedObject","fun":"sporks.example.LambdaExample$Filter$"},"packedEnv":{"$type":"sporks.Packed.PackedObject","fun":"sporks.example.LambdaExample$Predicate$"}}
 val unpickled = read[Spork[Int => Boolean]](pickled)
 val fun       = unpickled.unwrap()
 fun(11) // true
@@ -135,11 +135,11 @@ However, they are only supported on the JVM.
 val predicate = Spork.apply[Int => Boolean]({ x => x > 10 })
 val filter =
   Spork.apply[
-    Spork[Int => Boolean] => Int => Boolean
+    (Int => Boolean) => Int => Boolean
   ]({ env => x =>
-    env.unwrap().apply(x)
+    env.apply(x)
   })
-val fun = filter.withEnv(predicate).unwrap()
+val fun = filter.withEnv2(predicate).unwrap()
 fun(11) // true
 fun(9) // false
 ```
