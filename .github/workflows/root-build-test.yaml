@@ -38,11 +38,10 @@ jobs:
         uses: sbt/setup-sbt@v1
       - name: Build and test
         run: |
-          make build
-          make test
-          make test-example
-      # - name: Paranoid cross-build and cross-test
-      #   run: |
-      #     make cross-build
-      #     make cross-test
-      #     make cross-test-example
+          sbt -v compile
+          sbt -v test:compile
+          sbt -v test
+          sbt -v "exampleJVM / runMain sporks.example.Example"
+          sbt -v "exampleJVM / runMain sporks.example.LambdaExample"
+          sbt -v "exampleJS     / run"
+          sbt -v "exampleNative / run"
