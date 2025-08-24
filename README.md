@@ -1,5 +1,8 @@
 # Sporks3
 
+> [!IMPORTANT]
+> This repository / fork has been merged into [Spores3](https://github.com/phaller/spores3) and is no longer maintained.
+
 Simple and safe serialization/pickling library for functions/closures in Scala 3.
 
 This is an experimental fork of the "Spores3" project created by Philipp Haller ([https://github.com/phaller/spores3](https://github.com/phaller/spores3)), which in turn is a continuation of the work on "Spores" by Heather Miller and Philipp Haller.
